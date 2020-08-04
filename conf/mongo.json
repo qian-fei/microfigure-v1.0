@@ -1,0 +1,23 @@
+﻿{
+    "microfigure_reader": {
+        "host": ["192.168.1.21:38518", "192.168.1.22:38518", "192.168.1.25:38518"],
+        "username": "reader",
+        "password": "gli@hotspotr",
+        "authSource": "microfigure",
+        "authMechanism": "SCRAM-SHA-1",
+        "readPreference": "secondaryPreferred",
+        "replicaSet": "glictr_rs"
+    },
+    "microfigure_writer": {
+        "host": ["192.168.1.21:38518", "192.168.1.22:38518", "192.168.1.25:38518"],
+        "username": "writer",
+        "password": "gli@hotspotw",
+        "authSource": "microfigure",
+        "authMechanism": "SCRAM-SHA-1",
+        "readPreference": "primaryPreferred",
+        "replicaSet": "glictr_rs"
+    },
+    "local_writer": {
+        "host": "127.0.0.1:27017"
+    }
+}

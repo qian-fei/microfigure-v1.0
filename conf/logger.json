@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "detail": {
+            "class": "logging.Formatter",
+            "format": "%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s: %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "detail"
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 1048576,
+            "backupCount": 20,
+            "delay": false,
+            "filename": "log.txt",
+            "level": "INFO",
+            "formatter": "detail",
+            "encoding": "utf-8"
+        }
+    },
+    "loggers": {
+        "log_debug": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG"
+        },
+        "log_release": {
+            "handlers": ["file"],
+            "level": "INFO"
+        }
+    }
+}
