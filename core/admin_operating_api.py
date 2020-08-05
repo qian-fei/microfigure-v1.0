@@ -127,7 +127,7 @@ def post_platform_pricing(uid="001"):
         doc = manage.client["price"].update({"format": "扩大授权", "uid": uid}, {"$set": {"price": float(k_price)}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
-        doc = manage.client["support_method"].update({}, {"$set": {"fees": fees}})
+        doc = manage.client["support_method"].update({"state": 1}, {"$set": {"fees": fees}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
         return response()

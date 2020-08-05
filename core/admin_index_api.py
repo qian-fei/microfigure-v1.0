@@ -109,8 +109,10 @@ def get_data_statistics():
             }
             data_list.append(obj)
         befor_total = data_list[0]
-        amount_delta = (today_total.get("total_amount") - befor_total.get("total_amount")) / today_total.get("total_amount") if befor_total.get("total_amount") == 0 else befor_total.get("total_amount")
-        sale_delta = (today_total.get("total_sale") - befor_total.get("total_sale")) / today_total.get("total_sale") if befor_total.get("total_sale") == 0 else befor_total.get("total_amount")
+        amount_delta =  0 if today_total.get("total_amount") == 0 and befor_total.get("total_amount") == 0 else \
+            (today_total.get("total_amount") - befor_total.get("total_amount")) / befor_total.get("total_amount") if befor_total.get("total_amount") != 0 else 1
+        sale_delta = 0 if today_total.get("total_sale") == 0 and befor_total.get("total_sale") == 0 else \
+            (today_total.get("total_sale") - befor_total.get("total_sale")) / befor_total.get("total_sale")  if befor_total.get("total_sale") != 0 else 1
         amount_delta = "%.2f" % amount_delta
         sale_delta = "%.2f" % sale_delta
         today_total["amount_delta"] = float(amount_delta)
@@ -120,6 +122,4 @@ def get_data_statistics():
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
-
-
 

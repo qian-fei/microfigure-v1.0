@@ -419,7 +419,7 @@ def get_user_paymethod_show():
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         # 查询数据
-        cursor = manage.client["support_method"].find({"state": 1}, {"_id": 0, "method": 1, "ico_url": 1, "fees": 1})
+        cursor = manage.client["support_method"].find({"state": 1}, {"_id": 0, "channel": 1, "ico_url": 1, "fees": 1})
         data_list = [doc for doc in cursor]
         if not data_list:
             return response(msg="Internal Server Error: Lack of data in database.", code=1, status=500)
@@ -449,6 +449,43 @@ def get_user_balance():
         doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": yesterday_stamp}, {"_id": 0, "amount": 1})
         data["amount"] = doc.get("amount")
         return response(data=data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_withdrawal_apply():
+    """提现申请"""
+    try:
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        # 参数
+        channel = request.json.get("channel")
+        trade_name = request.json.get("trade_name") # 提现账户名
+        trade_id = request.json.get("trade_id") # 提现账号
+        amount = request.json.get("amount")
+        if not channel:
+            return response(msg="Bad Request: Miss params: 'channel'.", code=1, status=400)
+        if not trade_name:
+            return response(msg="请填写账户名", code=1)
+        if not trade_id:
+            return response(msg="请填写账号", code=1)
+        if not amount:
+            return response(msg="请填写提现金额", code=1)
+        if amount < 0:
+            return response(msg="请填写正确的金额", code=1)
+        doc = manage.client["user"].find_one({"uid": user_id})
+        balance = doc["balance"]
+        if amount > balance:
+            return response(msg="余额不足", code=1)
+        order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        condition = {
+            "order": order, "channel": channel, "user_id": user_id, "trade_name": trade_name, "trade_id": trade_id, "amount": amount, "state": 1,
+            "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+        }
+        manage.client["withdrawal_records"].insert(condition)
+        return response(msg="将在7-14个工作日到账，届时注意查收")
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

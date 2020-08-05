@@ -174,3 +174,25 @@
 2020-08-05 15:19:47,975 manage.py[line:43] INFO: The application has started.
 2020-08-05 15:20:23,531 manage.py[line:43] INFO: The application has started.
 2020-08-05 15:20:23,663 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:45:14,963 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:46:54,466 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:46:54,600 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:46:55,673 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:46:55,836 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:47:52,693 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:47:52,828 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:47:57,831 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:48:16,970 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:50:21,315 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:50:31,557 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:50:42,226 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:50:51,046 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:51:02,350 admin_index_api.py[line:121] ERROR: division by zero
+2020-08-05 15:53:40,268 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:53:40,410 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:54:56,139 manage.py[line:43] INFO: The application has started.
+2020-08-05 15:54:56,269 manage.py[line:43] INFO: The application has started.
+2020-08-05 16:02:00,763 manage.py[line:43] INFO: The application has started.
+2020-08-05 16:02:00,899 manage.py[line:43] INFO: The application has started.
+2020-08-05 16:02:56,119 manage.py[line:43] INFO: The application has started.
+2020-08-05 16:02:56,267 manage.py[line:43] INFO: The application has started.

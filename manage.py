@@ -492,6 +492,13 @@ def user_balance():
     return app_user_api.get_user_balance()
 
 
+@app.route(f"{url}/user/withdrawal", methods=["POST"])
+@auth_user_login
+def user_withdrawal_apply():
+    """用户提现申请接口"""
+    return app_user_api.post_withdrawal_apply()
+
+
 @app.route(f"{url}/user/home/page", methods=["GET"])
 @auth_user_login
 def user_home_page():
