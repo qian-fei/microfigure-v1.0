@@ -412,14 +412,14 @@ def get_user_data_statistic():
 
 
 def get_user_paymethod_show():
-    """我的账户支付方式展示"""
+    """我的账户提现方式展示"""
     try:
         # 用户id
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         # 查询数据
-        cursor = manage.client["pay_method"].find({"user_id": user_id}, {"_id": 0, "method": 1, "ico_url": 1, "type": 1, "fees": 1, "state": 1})
+        cursor = manage.client["support_method"].find({"state": 1}, {"_id": 0, "method": 1, "ico_url": 1, "fees": 1})
         data_list = [doc for doc in cursor]
         if not data_list:
             return response(msg="Internal Server Error: Lack of data in database.", code=1, status=500)
@@ -448,7 +448,7 @@ def get_user_balance():
         data["balance"] = doc.get("balance")
         doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": yesterday_stamp}, {"_id": 0, "amount": 1})
         data["amount"] = doc.get("amount")
-        return response(data=data) 
+        return response(data=data)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

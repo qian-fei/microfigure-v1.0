@@ -68,7 +68,8 @@ class WechatPay(object):
         xml_data = xmltodict.unparse({"xml": json_data}, pretty=True, full_document=False).encode("utf-8")
         return xml_data
 
-    def generate_sign(self, params):
+    @staticmethod
+    def generate_sign(params):
         """
         生成md5签名
         :param params: 向微信支付发送的请求参数
@@ -76,7 +77,7 @@ class WechatPay(object):
         """
         if "sign" in params:
             params.pop("sign")
-        src = "&".join(["%s=%s" % (k, v) for k, v in sorted(params.items())]) + "&key=%s" % self.SECRET_KEY
+        src = "&".join(["%s=%s" % (k, v) for k, v in sorted(params.items())]) + "&key=%s" % WechatPay.SECRET_KEY
         sign = md5(src.encode("utf-8")).hexdigest().upper()
         return sign
 
@@ -88,7 +89,7 @@ class WechatPay(object):
         """
         # 生成xml数据
         self.order_info["nonce_str"] = self.generate_nonce_str()
-        self.order_info["sign"] = self.generate_sign(self.order_info)
+        self.order_info["sign"] = WechatPay.generate_sign(self.order_info)
         xml_data = self.generate_xml_data(self.order_info)
         # 向微信支付发送请求
         context = {}
@@ -120,11 +121,11 @@ class WechatPay(object):
             "noncestr": self.generate_nonce_str(), # 随机字符串
             "timestamp": str(int(time.time())) # 时间戳 秒级
         }
-        app_request_info["sign"] = self.generate_sign(app_request_info)
+        app_request_info["sign"] = WechatPay.generate_sign(app_request_info)
         return app_request_info
     
-
-    def verify_wechat_call_back(self, request_body):
+    @staticmethod
+    def verify_wechat_call_back(request_body):
         """
         校验微信回调参数
         :param request_body: 微信回调请求体数据
@@ -139,7 +140,7 @@ class WechatPay(object):
             if "sign" not in request_params:
                 return False, False
             backcall_sign = request_params["sign"]
-            sign = self.generate_sign(request_params)
+            sign = WechatPay.generate_sign(request_params)
             if sign == backcall_sign:
                 return dict_params["out_trade_no"], dict_params["total_fee"]
             else:

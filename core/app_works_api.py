@@ -132,11 +132,10 @@ def post_audio_upload_common(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def post_pic_material_upload(domain=constant.DOMAIN, fees=constant.FEES, discount=constant.DISCOUNT):
+def post_pic_material_upload(domain=constant.DOMAIN, discount=constant.DISCOUNT):
     """
     素材上传接口
     :param domain: 域名
-    :param fees: 手续费
     :param discount: 折扣
     """
     try:
@@ -175,7 +174,7 @@ def post_pic_material_upload(domain=constant.DOMAIN, fees=constant.FEES, discoun
             condition = []
             for i in spec_list:
                 temp = {"uid": uid, "user_id": user_id, "type": 0, "pic_id": doc["uid"], "format": i, "currency": "￥", "price_unit": "元", "size_unit": "px", "discount": discount, 
-                        "fees": fees, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                        "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
                 condition.append(temp)
             file_path_s = context["file_path_s"]
             file_path_m = context["file_path_m"]

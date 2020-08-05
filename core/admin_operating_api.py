@@ -80,15 +80,14 @@ def get_platform_info(uid="001"):
         # 查询
         pipeline = [
             {"$match": {"uid": uid}},
-            {"$project": {"_id": 0, "format": {"$cond": {"if": {"$eq": ["$format", "扩大授权"]}, "then": "k_price", "else": {"$concat": [{"$toLower": "$format"}, "_price"]}}}, "price": 1, "fees": 1}},
+            {"$project": {"_id": 0, "format": {"$cond": {"if": {"$eq": ["$format", "扩大授权"]}, "then": "k_price", "else": {"$concat": [{"$toLower": "$format"}, "_price"]}}}, "price": 1}},
         ]
         cursor = manage.client["price"].aggregate(pipeline)
-        m = 0
         for doc in cursor:
             data.update({doc["format"]: doc["price"]})
-            if m == 0:
-                data.update({"fees": doc["fees"]})
-                m += 1
+        cursor = manage.client["support_method"].find({})
+        fees = [doc for doc in cursor][0]["fees"]
+        data.update({"fees": fees})
         return response(data=data)
     except Exception as e:
         manage.log.error(e)
@@ -116,16 +115,19 @@ def post_platform_pricing(uid="001"):
             return response(msg="Bad Request: Params 'k_price' is error.", code=1, status=400)
         if not fees or float(fees) < 0:
             return response(msg="Bad Request: Params 'fees' is error.", code=1, status=400)
-        doc = manage.client["price"].update({"format": "S", "uid": uid}, {"$set": {"price": float(s_price), "fees": float(fees)}})
+        doc = manage.client["price"].update({"format": "S", "uid": uid}, {"$set": {"price": float(s_price)}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
-        doc = manage.client["price"].update({"format": "M", "uid": uid}, {"$set": {"price": float(m_price), "fees": float(fees)}})
+        doc = manage.client["price"].update({"format": "M", "uid": uid}, {"$set": {"price": float(m_price)}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
-        doc = manage.client["price"].update({"format": "L", "uid": uid}, {"$set": {"price": float(l_price), "fees": float(fees)}})
+        doc = manage.client["price"].update({"format": "L", "uid": uid}, {"$set": {"price": float(l_price)}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
-        doc = manage.client["price"].update({"format": "扩大授权", "uid": uid}, {"$set": {"price": float(fees), "fees": float(fees)}})
+        doc = manage.client["price"].update({"format": "扩大授权", "uid": uid}, {"$set": {"price": float(k_price)}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Update failed.", code=1, status=400)
+        doc = manage.client["support_method"].update({}, {"$set": {"fees": fees}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
         return response()

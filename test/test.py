@@ -283,15 +283,16 @@ temp = {
 # for doc in cursor:
 #     print(doc)
 # Successfully installed bcrypt-3.1.7 cryptography-3.0 paramiko-2.7.1 pynacl-1.4.0 sshtunnel-0.1.5
-from sshtunnel import SSHTunnelForwarder
-import pymongo
-server = SSHTunnelForwarder(
-    ssh_address_or_host="120.26.218.247",
-    ssh_username = "root",
-    ssh_password = "wwwgli20160503CN" ,
-    remote_bind_address = ("127.0.0.1", 27018))
-server.start()
-client = pymongo.MongoClient('127.0.0.1',server.local_bind_port) ## 这里一定要填入ssh映射到本地的端口
-cursor = client["Lean"]["me_music"].find({})
-for doc in cursor:
-    print(doc)
+# from sshtunnel import SSHTunnelForwarder
+# import pymongo
+# server = SSHTunnelForwarder(
+#     ssh_address_or_host="120.26.218.247",
+#     ssh_username = "root",
+#     ssh_password = "wwwgli20160503CN" ,
+#     remote_bind_address = ("127.0.0.1", 27018))
+# server.start()
+# client = pymongo.MongoClient('127.0.0.1',server.local_bind_port) ## 这里一定要填入ssh映射到本地的端口
+# cursor = client["Lean"]["me_music"].find({})
+# for doc in cursor:
+#     print(doc)
+

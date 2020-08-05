@@ -262,8 +262,7 @@ def post_alipay_callback_verify():
     """支付宝回调验证"""
     try:
         data = request.args
-        alipay = AliPay(None, None)
-        out_trade_no, total_amount = alipay.callback_verify_sign(data)
+        out_trade_no, total_amount = AliPay.callback_verify_sign(data)
         if not out_trade_no:
             return Response("failure")
         cursor = manage.client["order"].find({"order": out_trade_no})
@@ -286,8 +285,7 @@ def post_wechat_callback_verify():
     """微信支付回调验证"""
     try:
         data = request.args
-        wxpay = WechatPay(None, None)
-        out_trade_no, total_fee = wxpay.verify_wechat_call_back(data)
+        out_trade_no, total_fee = WechatPay.verify_wechat_call_back(data)
         if not all([out_trade_no, total_fee]):
             xml_data = wxpay.generate_xml_data({"return_code": "FAIL", "return_msg": "验证失败"})
             return Response(xml_data)

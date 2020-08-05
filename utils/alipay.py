@@ -109,7 +109,8 @@ class AliPay(object):
         b64_sign = base64.b64encode(sign)
         return b64_sign
     
-    def generate_str(self, param):
+    @staticmethod
+    def generate_str(param):
         """
         字典生成字符串
         :param param: 字典参数
@@ -133,9 +134,10 @@ class AliPay(object):
         self.public_param["biz_content"] = f"{self.order_info}"
         self.public_param.pop("sign")
         self.public_param["sign"] = self.genreate_sign(self.order_info)
-        request_param = self.generate_str(self.public_param)
+        request_param = AliPay.generate_str(self.public_param)
         return request_param
     
+    @staticmethod
     def callback_verify_sign(self, callback_param):
         """
         支付宝回调验证
@@ -151,9 +153,9 @@ class AliPay(object):
         # 除sign、sign_type参数外，其余参数皆是待验签参数
         param_dict.pop("sign_type")
         param_dict.pop("sign")
-        param_str = self.generate_str(param_dict)
+        param_str = AliPay.generate_str(param_dict)
         content = param_str.encode("utf-8")
-        public_key = rsa.PublicKey.load_pkcs1_openssl_pem(self.ALIPAY_PUBLIC)
+        public_key = rsa.PublicKey.load_pkcs1_openssl_pem(AliPay.ALIPAY_PUBLIC)
         try:
             rest = rsa.verify(content, call_sign, public_key)
             return param_dict["out_trade_no"], param_dict["total_amount"]
