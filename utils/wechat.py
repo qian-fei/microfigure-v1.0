@@ -138,15 +138,15 @@ class WechatPay(object):
         if return_code == "SUCCESS":
             # 校验签名
             if "sign" not in request_params:
-                return False, False
+                return False, False, False
             backcall_sign = request_params["sign"]
             sign = WechatPay.generate_sign(request_params)
             if sign == backcall_sign:
-                return dict_params["out_trade_no"], dict_params["total_fee"]
+                return dict_params["out_trade_no"], dict_params["total_fee"], dict_params["transaction_id"]
             else:
-                return False, False
+                return False, False, False
         else:
-            return False, False
+            return False, False, False
 
 
 if __name__ == "__main__":

@@ -862,6 +862,27 @@ def app_callback():
     return app_order_api.post_app_callback()
 
 
+@app.route(f"{url}/balance/recharge", methods=["POST"])
+@auth_user_login
+def balance_recharge():
+    """余额充值接口"""
+    return app_order_api.post_top_up()
+
+
+@app.route(f"{url}/recharge/alipay/callback", methods=["POST"])
+@auth_user_login
+def balance_recharge_callback_alipay():
+    """余额充值支付宝回调接口"""
+    return app_order_api.post_top_up_alipay_callback_verify()
+
+
+@app.route(f"{url}/recharge/wechat/callback", methods=["POST"])
+@auth_user_login
+def balance_recharge_callback_wechat():
+    """余额充值微信回调接口"""
+    return app_order_api.post_top_up_wechat_callback_verify()
+
+
 ############################################################【后台管理系统API】############################################################
 
 

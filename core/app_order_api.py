@@ -5,7 +5,7 @@
 @Time: 2020-07-14 17:24:23
 @Author: money 
 """
-##################################【app订单模块】##################################
+##################################【app订单及充值模块】##################################
 import os
 import base64
 import string
@@ -208,7 +208,7 @@ def post_order_payment():
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         order = request.json.get("order")
-        pay_method = request.json.get("pay_method") # 余额 支付宝 微信
+        channel = request.json.get("channel") # 余额 支付宝 微信
         total_amount = request.json.get("total_amount")
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
@@ -262,7 +262,7 @@ def post_alipay_callback_verify():
     """支付宝回调验证"""
     try:
         data = request.args
-        out_trade_no, total_amount = AliPay.callback_verify_sign(data)
+        out_trade_no, total_amount, _ = AliPay.callback_verify_sign(data)
         if not out_trade_no:
             return Response("failure")
         cursor = manage.client["order"].find({"order": out_trade_no})
@@ -285,7 +285,7 @@ def post_wechat_callback_verify():
     """微信支付回调验证"""
     try:
         data = request.args
-        out_trade_no, total_fee = WechatPay.verify_wechat_call_back(data)
+        out_trade_no, total_fee, _ = WechatPay.verify_wechat_call_back(data)
         if not all([out_trade_no, total_fee]):
             xml_data = wxpay.generate_xml_data({"return_code": "FAIL", "return_msg": "验证失败"})
             return Response(xml_data)
@@ -337,6 +337,8 @@ def post_app_callback():
         doc = manage.client["user"].update({"uid": seller_id}, {"$set": {"balance": total_amount}})
         if doc["n"] == 0:
             raise Exception("User balance update failed")
+        # 更新订单状态
+        manage.client["order"].update({"order": order}, {"$set": {"state": 2}})
         # 统计
         dtime = datetime.datetime.now()
         time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
@@ -350,3 +352,85 @@ def post_app_callback():
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_top_up():
+    """余额充值"""
+    request_param = ""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        channel = request.json.get("channel") # 支付宝 微信
+        total_amount = request.json.get("total_amount")
+        if pay_method not in ["微信", "支付宝", "余额"]:
+            return response(msg="Bad Request: Params 'pay_method' is error.", code=1, status=400)
+        if not total_amount:
+            return response(msg="Bad Request: Miss params: 'total_amount'.", code=1, status=400)
+        if total_amount < 0 or type(total_amount) != float:
+            return response(msg="Bad Request: Parmas 'total_amount' is error.", code=1, status=400)
+        order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        # 创建充值订单
+        condition = {
+            "order": order, "user_id": user_id, "channel": channel, "amount": total_amount, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+        }
+        manage.client["recharge_records"].insert(condition)
+        # 支付宝支付
+        if pay_method == "支付宝":
+            alipay = AliPay(order, total_amount)
+            request_param = alipay.generate_request_param()
+        # 微信支付
+        if pay_method == "微信":
+            wechatpay = WechatPay(order, total_amount * 100)
+            prepay_id = wechatpay.wechat_payment_request()
+            if not prepay_id:
+                return response(msg="请求微信失败", code=1)
+            request_param = wechatpay.generate_app_call_data(prepay_id)
+        return response(data=request_param)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_top_up_alipay_callback_verify():
+    """余额充值-支付宝回调验证"""
+    try:
+        data = request.args
+        out_trade_no, total_amount, trade_no = AliPay.callback_verify_sign(data)
+        if not out_trade_no:
+            return Response("failure")
+        doc = manage.client["recharge_records"].find_one({"order": out_trade_no})
+        if not doc:
+            return Response("failure")
+        if doc.get("amount") != total_amount:
+            return Response("failure")
+        manage.client["recharge_records"].update({"order": out_trade_no}, {"$set": {"trade_id": trade_no, "state": 1}})
+        return Response("success")
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_top_up_wechat_callback_verify():
+    """余额充值-微信回调验证"""
+    try:
+        data = request.args
+        out_trade_no, total_fee, transaction_id = WechatPay.verify_wechat_call_back(data)
+        if not all([out_trade_no, total_fee]):
+            xml_data = wxpay.generate_xml_data({"return_code": "FAIL", "return_msg": "验证失败"})
+            return Response(xml_data)
+        doc = manage.client["recharge_records"].find_one({"order": out_trade_no})
+        if not doc:
+            xml_data = wxpay.generate_xml_data({"return_code": "FAIL", "return_msg": "验证失败"})
+            return Response(xml_data)
+        if doc.get("amount") != total_fee / 100:
+            xml_data = wxpay.generate_xml_data({"return_code": "FAIL", "return_msg": "验证失败"})
+            return Response(xml_data)
+        xml_data = wxpay.generate_xml_data({"return_code": "SUCCESS", "return_msg": "OK"})
+        manage.client["recharge_records"].update({"order": out_trade_no}, {"$set": {"trade_id": transaction_id, "state": 1}})
+        return Response(xml_data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
