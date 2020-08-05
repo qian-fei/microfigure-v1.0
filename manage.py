@@ -13,7 +13,8 @@ import pymongo
 from flask_cors import CORS
 from dateutil import parser  # pip3  install python-dateutil 
 from core import app_login_api, app_list_api, app_user_api, app_order_api, app_works_api
-from core import admin_login_api, admin_index_api, admin_front_api, admin_user_api, admin_opinion_api, admin_operating_api, admin_system_api, admin_finance_api, admin_works_api
+from core import admin_login_api, admin_index_api, admin_front_api, admin_user_api, admin_opinion_api, \
+    admin_operating_api, admin_system_api, admin_finance_api, admin_works_api
 from utils import util
 from flask import Flask, jsonify, request, g
 from constant.constant import DOMAIN
@@ -62,7 +63,6 @@ url = "/api/v1"
 init_date = "1970-01-01T08:00:00Z"
 # python 没有IOSDate类型 需要借助parser.parse来转 # pip3  install python-dateutil 
 init_stamp = parser.parse(init_date)
-
 
 
 def auth_user_login(f):
@@ -122,7 +122,8 @@ def auth_admin_login(f):
             from utils.util import response
             if not token:
                 return response(msg="Bad Request: Miss params 'token'.", code=1, status=400)
-            doc = client["user"].find_one({"token": token, "type": {"$in": ["super","admin"]}}, {"_id": 0, "uid": 1, "type": 1, "nick": 1, "sex": 1, "sign": 1, "mobile": 1, "role_id": 1})
+            doc = client["user"].find_one({"token": token, "type": {"$in": ["super","admin"]}}, 
+                                          {"_id": 0, "uid": 1, "type": 1, "nick": 1, "sex": 1, "sign": 1, "mobile": 1, "role_id": 1})
             if not doc:
                 return response(msg="Bad Request: The user doesn't exist.", code=1, status=400)   
             if doc["type"] not in ["super", "admin"]:
@@ -173,8 +174,8 @@ def response_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "*"
     response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Content-Struct-Type"] = "HotAppServerApi"
     response.headers["Access-Control-Expose-Headers"] = "*"
+    response.headers["Content-Struct-Type"] = "HotAppServerApi"
     return response
 
 
@@ -347,12 +348,6 @@ def user_message():
 def user_message_alter():
     """删除我的消息"""
     return app_user_api.put_user_message_alter()
-
-
-# @app.route(f"{url}/user/follow/list", methods=["GET"])
-# def user_follow():
-#     """我的关注"""
-#     return app_user_api.get_user_follow()
 
 
 @app.route(f"{url}/user/follow/search", methods=["GET"])
@@ -1495,6 +1490,7 @@ def admin_finance_recharge_export():
 def admin_finance_withdrawal_audit_export():
     """后台提现审核记录导出接口"""
     return admin_finance_api.get_withdrawal_records_audit_export()
+
 
 @app.route(f"{url}/test", methods=["POST"])
 def test():

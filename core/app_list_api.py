@@ -226,32 +226,33 @@ def post_browse_records():
         # 获取参数
         visitor_id = request.headers.get("user_id", None)
         user_id = user_id if user_id else visitor_id
-        works_id = request.json.get("works_id", None)
-        if not works_id:
-            return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
-        if not user_id:
-            return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
-        doc = manage.client["works"].find_one({"uid": works_id})
-        if not doc:
-            return response(msg="Bad Request: 'works_id' data does not exist.", code=1, status=400)
-        type = doc.get("type")
-        # 记录
-        condition = {"user_id": user_id, "works_id": works_id, "type": type, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-        manage.client["browse_records"].insert(condition)
-        # 浏览量+1
-        doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"browse_num": 1}})
-        if doc["n"] == 0:
-            return response(msg="Bad Request: Params 'works_id' is error.", code=1, status=400)
-        # 凌晨时间戳
-        today = datetime.date.today()
-        today_stamp = int(time.mktime(today.timetuple())*1000)
-        doc = manage.client["works"].find_one({"works_id": works_id})
-        author_id = doc.get("user_id")
-        doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
-        if doc:
-            manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
-        else:
-            manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "browse_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        works_id_list = request.json.get("works_id", None) # array
+        for works_id in works_id_list:
+            if not works_id:
+                return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
+            if not user_id:
+                return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
+            doc = manage.client["works"].find_one({"uid": works_id})
+            if not doc:
+                return response(msg="Bad Request: 'works_id' data does not exist.", code=1, status=400)
+            type = doc.get("type")
+            # 记录
+            condition = {"user_id": user_id, "works_id": works_id, "type": type, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["browse_records"].insert(condition)
+            # 浏览量+1
+            doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"browse_num": 1}})
+            if doc["n"] == 0:
+                return response(msg="Bad Request: Params 'works_id' is error.", code=1, status=400)
+            # 凌晨时间戳
+            today = datetime.date.today()
+            today_stamp = int(time.mktime(today.timetuple())*1000)
+            doc = manage.client["works"].find_one({"works_id": works_id})
+            author_id = doc.get("user_id")
+            doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
+            if doc:
+                manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
+            else:
+                manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "browse_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         return response()
     except Exception as e:
         manage.log.error(e)

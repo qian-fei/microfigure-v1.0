@@ -259,21 +259,18 @@ def get_audio_material_detail(domain=constant.DOMAIN):
         if not audio_id:
             return response(msg="Bad Request: Miss params: 'audio_id'.", code=1, status=400)
         # 查询
-        # 查询
         pipeline = [
             {"$match": {"uid": audio_id}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "account": "$user_info.account"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$skip": (int(page) - 1) * int(num)},
-            {"$limit": int(num)},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "nick": 1, "account": 1, "format": 1, "size": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
                           "covre_url": {"$concat": [domain, "$pic_url"]}, "audio_url": {"$concat": [domain, "$audio_url"]}}}
         ]
-        doc = manager.client["pic_material"].aggregate(pipeline)
+        cursor = manage.client["audio_material"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        return response(data=data_list[0] if data_list else {})
+        return response(data=data_list[0] if data_list else None)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s" % str(e), code=1, status=500)
@@ -300,7 +297,7 @@ def put_audio_material(title_length_max=32, label_length_max=20):
             return response(msg=f"标题允许最长{title_length_max}个字符", code=1)
         if len(label) > label_length_max:
             return response(msg=f"标签最多允许{label_length_max}个", code=1)
-        doc = manage.client["pic_material"].update({"uid": audio_id}, {"$set": {"title": title, "label": label}})
+        doc = manage.client["audio_material"].update({"uid": audio_id}, {"$set": {"title": title, "label": label}})
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
         return response()
@@ -702,7 +699,6 @@ def put_altas_works_editor(title_length_max=32, label_length_max=20):
         title = request.json.get("title")
         label = request.json.get("label")
         state = request.json.get("state") # 0未审核，1审核中，2已上架, 3违规下架
-        pic_id = request.json.get("pic_id") # array
         if not works_id:
             return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         if not title:
@@ -715,12 +711,8 @@ def put_altas_works_editor(title_length_max=32, label_length_max=20):
             return response(msg=f"标签最多允许{label_length_max}个", code=1)
         if state not in [3, 0, 1, 2]:
             return response(msg="Bad Request: Params 'state' is error.", code=1, status=400)
-        if not pic_id:
-            return response(msg="Bad Request: Miss params: 'pic_id'.", code=1, status=400)
-        if len(pic_id) > label_length_max:
-            return response(msg=f"最多允许选择{label_length_max}张图", code=1)
         # 更新
-        doc = manage.client["works"].update({"uid": works_id}, {"$set": {"title": title, "state": state, "label": label, "pic_id": pic_id}})
+        doc = manage.client["works"].update({"uid": works_id}, {"$set": {"title": title, "state": state, "label": label}})
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
         return response()
@@ -745,7 +737,7 @@ def get_article_works_detail(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "title": 1, "content": 1, "nick": 1, "head_img_url": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, 
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "content": 1, "nick": 1, "head_img_url": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, "format": 1,
                           "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)

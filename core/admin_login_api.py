@@ -40,7 +40,8 @@ def post_admin_login():
         if not password:
             return response(msg="请输入密码", code=1)
         condition = {"_id": 0, "uid": 1, "type":1, "role_id": 1, "token": 1, "nick": 1, "sex": 1, "sign": 1, "mobile": 1, "login_time": 1}
-        doc = manage.client["user"].find_one({"account": account, "password": password}, condition)
+        password_b64 = base64.b64encode(str(password).encode()).decode()
+        doc = manage.client["user"].find_one({"account": account, "password": password_b64}, condition)
         if not doc:
             return response(msg="账户名或密码错误", code=1)
         if doc.get("state") == 0:

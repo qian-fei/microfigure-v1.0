@@ -127,9 +127,11 @@ def post_create_account():
         if not role:
             return response(msg="Bad Request: Miss params: 'role'.", code=1, status=400)
         uid = base64.b64encode(os.urandom(32)).decode()
+        password = "123456"
+        password_b64 = base64.b64encode(str(password).encode()).decode()
         condition = {
             "uid": uid, "type": "admin", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "auth": 0, "sex": "保密", "age": 18, "works_num": 0,
-            "account": account, "nick": nick, "mobile": mobile, "password": "123456", "role_id": [obj["id"] for obj in role], "role_name": "、".join([obj["nick"] for obj in role]), "label": [],
+            "account": account, "nick": nick, "mobile": mobile, "password": password_b64, "role_id": [obj["id"] for obj in role], "role_name": "、".join([obj["nick"] for obj in role]), "label": [],
             "balance": 0.0, "sign": "欢迎使用微图~", "group": "comm", "login_time": int(time.time() * 1000)
         }
         manage.client["user"].insert(condition)

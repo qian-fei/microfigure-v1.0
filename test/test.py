@@ -239,24 +239,24 @@ temp = {
 # for i,j in enumerate(temp):
 #     print(i,j)
 
-import rsa
-import base64
-public_key, private_key  = rsa.newkeys(1024)
-k = private_key.save_pkcs1()
-p = public_key.save_pkcs1()
-with open("1.py", "wb") as f:
-    f.write(k)
-with open("2.py", "wb") as f:
-    f.write(p)
-k = rsa.PrivateKey._load_pkcs1_pem(k)
-k = rsa.sign("是吗".encode("utf-8"), k, "SHA-256")
-k = base64.b64encode(k)
-print(k)
+# import rsa
+# import base64
+# public_key, private_key  = rsa.newkeys(1024)
+# k = private_key.save_pkcs1()
+# p = public_key.save_pkcs1()
+# with open("1.py", "wb") as f:
+#     f.write(k)
+# with open("2.py", "wb") as f:
+#     f.write(p)
+# k = rsa.PrivateKey._load_pkcs1_pem(k)
+# k = rsa.sign("是吗".encode("utf-8"), k, "SHA-256")
+# k = base64.b64encode(k)
+# print(k)
 
-dtime = datetime.datetime.now()
-print(dtime)
-t = dtime.strftime("%Y-%m-%d %H:%M:%S")
-print(t)
+# dtime = datetime.datetime.now()
+# print(dtime)
+# t = dtime.strftime("%Y-%m-%d %H:%M:%S")
+# print(t)
 
 # dict = {
 #     "name": 1,
@@ -270,3 +270,28 @@ print(t)
 # print(query)
 # lst = dict([(k, v[0]) for k, v in urllib.parse.parse_qs(query).items()])
 # print(lst)
+
+# tuple = {1,3,4}
+# print(type(tuple))
+# from dateutil import parser 
+# t = parser.parse(datetime.datetime.utcnow().isoformat())
+# print(t, type(t))
+# from manage import client_me
+
+# cursor = client_me["me_music"].find({})
+
+# for doc in cursor:
+#     print(doc)
+# Successfully installed bcrypt-3.1.7 cryptography-3.0 paramiko-2.7.1 pynacl-1.4.0 sshtunnel-0.1.5
+from sshtunnel import SSHTunnelForwarder
+import pymongo
+server = SSHTunnelForwarder(
+    ssh_address_or_host="120.26.218.247",
+    ssh_username = "root",
+    ssh_password = "wwwgli20160503CN" ,
+    remote_bind_address = ("127.0.0.1", 27018))
+server.start()
+client = pymongo.MongoClient('127.0.0.1',server.local_bind_port) ## 这里一定要填入ssh映射到本地的端口
+cursor = client["Lean"]["me_music"].find({})
+for doc in cursor:
+    print(doc)

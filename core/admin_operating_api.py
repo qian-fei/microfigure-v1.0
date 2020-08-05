@@ -75,11 +75,21 @@ def get_platform_info(uid="001"):
     平台定价信息
     :param uid: 官方定价信息uid
     """
+    data = {}
     try:
         # 查询
-        cursor = manage.client["price"].find({"uid": uid}, {"_id": 0, "format": 1, "price": 1})
-        data_list = [doc for doc in cursor]
-        return response(data=data_list)
+        pipeline = [
+            {"$match": {"uid": uid}},
+            {"$project": {"_id": 0, "format": {"$cond": {"if": {"$eq": ["$format", "扩大授权"]}, "then": "k_price", "else": {"$concat": [{"$toLower": "$format"}, "_price"]}}}, "price": 1, "fees": 1}},
+        ]
+        cursor = manage.client["price"].aggregate(pipeline)
+        m = 0
+        for doc in cursor:
+            data.update({doc["format"]: doc["price"]})
+            if m == 0:
+                data.update({"fees": doc["fees"]})
+                m += 1
+        return response(data=data)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
