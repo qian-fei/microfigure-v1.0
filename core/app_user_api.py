@@ -1958,3 +1958,29 @@ def post_user_auth_cameraman(title_length_max=32, addr_length_max=128, domain=co
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_share_works():
+    """作品分享"""
+    try:
+        # 参数
+        works_id = request.json.get("works_id")
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
+        # 更新数据
+        doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"share_num": 1}})
+        if doc["n"] == 0:
+            return response(msg="'share_num' update failed.", code=1, status=400)
+        user_id = manage.client["works"].find_one({"uid": works_id}).get("user_id")
+        dtime = datetime.datetime.now()
+        time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+        timeArray = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+        timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
+        doc = manage.client["user_statistical"].update({"user_id": user_id, "date": timestamp}, {"$inc": {"share_num": 1}})
+        if doc["n"] == 0:
+            manage.client["user_statistical"].insert({"user_id": user_id, "date": timestamp, "share_num": 1, "create_time": int(time.time() * 1000),
+                                                      "update_time": int(time.time() * 1000)})
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

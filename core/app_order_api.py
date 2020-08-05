@@ -339,6 +339,8 @@ def post_app_callback():
             raise Exception("User balance update failed")
         # 更新订单状态
         manage.client["order"].update({"order": order}, {"$set": {"state": 2}})
+        # 更新作品销量
+        manage.client["works"].update({"uid": works_id}, {"$inc": {"sale_num": 1}})
         # 统计
         dtime = datetime.datetime.now()
         time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)

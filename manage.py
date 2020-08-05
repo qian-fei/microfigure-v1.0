@@ -799,6 +799,12 @@ def area_auth_cameraman():
     return app_user_api.post_user_auth_cameraman()
 
 
+@app.route(f"{url}/works/share", methods=["POST"])
+def user_works_share():
+    """作品分享接口"""
+    return app_user_api.post_share_works()
+
+
 @app.route(f"{url}/car/add", methods=["POST"])
 @auth_user_login
 def user_car_add():
