@@ -29,11 +29,11 @@ class WechatPay(object):
     BODY = "微图--余额充值"
     # 微信统一下单URL
     UNIFIED_ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder"
-    
-    def __init__(self, notify_url, out_trade_no, total_fee):
+    # 回调地址
+    NOTIFY_URL = "xxxxxxxx"
+    def __init__(self, out_trade_no, total_fee):
         """
         初始化配置
-        :param notify_url: 微信回调商户地址
         :param out_trade_no: 商户订单号
         :param total_fee: 总金额
         """
@@ -45,9 +45,9 @@ class WechatPay(object):
             "sign_type": self.SIGN_TYPE, # 加密类型
             "body": self.BODY, # 商品描述
             "out_trade_no": str(out_trade_no), # 商户订单号
-            "total_fee": total_fee, # 总金额
+            "total_fee": total_fee, # 总金额 单位分
             "spbill_create_ip": self.SPBILL_CREATE_IP, # 商户服务器IP
-            "notify_url": notify_url, # 支付结果回调地址
+            "notify_url": self.NOTIFY_URL, # 支付结果回调地址
             "trade_type": "APP" # 交易类型 默认传APP
         }
 
@@ -91,6 +91,7 @@ class WechatPay(object):
         self.order_info["sign"] = self.generate_sign(self.order_info)
         xml_data = self.generate_xml_data(self.order_info)
         # 向微信支付发送请求
+        context = {}
         resp = requests.post(self.UNIFIED_ORDER_URL, data=xml_data, headers={"Content-Type": "application/xml"})
         if resp.status_code == 200:
             rest = json.loads(json.dumps(xmltodict.parse(resp.content)))
@@ -102,7 +103,7 @@ class WechatPay(object):
                 err_code = rest["xml"]["return_code"] # 错误码FAIL
                 err_msg = rest["xml"]["return_msg"]
                 print(err_code, err_msg)
-                return err_code
+                return False
         return False
 
     def generate_app_call_data(self, prepay_id):
@@ -129,15 +130,6 @@ class WechatPay(object):
         :param request_body: 微信回调请求体数据
         :return: 返回校验微信支付回调通知的结果
         """
-
-        data = {
-            "return_code": "",
-            "return_msg": ""
-        }
-        temp = {
-            "state": 1, # 1校验成功 0校验失败
-            "return_info": ""
-        }
         # xml to dict
         dict_params = xmltodict.parse(request_body)["xml"]
         # 校验返回码
@@ -145,36 +137,17 @@ class WechatPay(object):
         if return_code == "SUCCESS":
             # 校验签名
             if "sign" not in request_params:
-                data["return_code"] = "FAIL"
-                data["return_msg"] = "缺少sign"
-                xml_data = self.generate_xml_data(data)
-                temp["state"] = 0
-                temp["return_data"] = xml_data
-                return temp
+                return False, False
             backcall_sign = request_params["sign"]
             sign = self.generate_sign(request_params)
             if sign == backcall_sign:
-                data["return_code"] = "SUCCESS"
-                data["return_msg"] = "OK"
-                xml_data = self.generate_xml_data(data)
-                temp["return_data"] = xml_data
-                return temp
+                return dict_params["out_trade_no"], dict_params["total_fee"]
             else:
-                data["return_code"] = "FAIL"
-                data["return_msg"] = "签名错误"
-                xml_data = self.generate_xml_data(data)
-                temp["state"] = 0
-                temp["return_data"] = xml_data
-                return temp
+                return False, False
         else:
-            data["return_code"] = "FAIL"
-            data["return_msg"] = dict_params.get("return_msg")
-            xml_data = self.generate_xml_data(data)
-            temp["state"] = 0
-            temp["return_data"] = xml_data
-            return temp
+            return False, False
 
 
 if __name__ == "__main__":
-    demo = WechatPay("http://hot.gli.cn/1", "20200701412141241", 0.01)
+    demo = WechatPay("20200701412141241", 0.01)
     demo.wechat_payment_request()

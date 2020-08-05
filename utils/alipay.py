@@ -67,13 +67,11 @@ class AliPay(object):
     RS0oRrm7sajRdh3nW52igjMQeGJf6Ve6hQIDAQAB
     -----END RSA PUBLIC KEY-----"""
 
-    def __init__(self, out_trade_no, total_amount, sign, timestamp):
+    def __init__(self, out_trade_no, total_amount):
         """
         初始化配置
         :param out_trade_no: 商户订单号
         :param total_amount: 订单总金额
-        :param sign: 签名
-        :param timestamp: 时间 格式："yyyy-MM-dd HH:mm:ss"
         """
         self.order_info = {
             "body": "微图app--余额充值", # 商品描述
@@ -158,7 +156,6 @@ class AliPay(object):
         public_key = rsa.PublicKey.load_pkcs1_openssl_pem(self.ALIPAY_PUBLIC)
         try:
             rest = rsa.verify(content, call_sign, public_key)
+            return param_dict["out_trade_no"], param_dict["total_amount"]
         except Exception as e:
-            rest = False
-        finally:
-            return rest
+            return False, False

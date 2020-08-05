@@ -16,7 +16,7 @@ from core import app_login_api, app_list_api, app_user_api, app_order_api, app_w
 from core import admin_login_api, admin_index_api, admin_front_api, admin_user_api, admin_opinion_api, \
     admin_operating_api, admin_system_api, admin_finance_api, admin_works_api
 from utils import util
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request, g, Response
 from constant.constant import DOMAIN
 
 
@@ -827,6 +827,33 @@ def user_order_state():
     return app_order_api.put_user_order()
 
 
+@app.route(f"{url}/order/payment", methods=["POST"])
+@auth_user_login
+def order_payment():
+    """订单支付接口"""
+    return app_order_api.post_order_payment()
+
+
+@app.route(f"{url}/alipay/callback", methods=["POST"])
+@auth_user_login
+def alipay_callback_verify():
+    """支付宝回调验证接口"""
+    return app_order_api.post_alipay_callback_verify()
+
+
+@app.route(f"{url}/wechat/callback", methods=["POST"])
+@auth_user_login
+def wechat_callback_verify():
+    """微信支付回调验证接口"""
+    return app_order_api.post_wechat_callback_verify()
+
+
+@app.route(f"{url}/app/callback", methods=["POST"])
+@auth_user_login
+def app_callback():
+    """支付成功后app回调接口"""
+    return app_order_api.post_app_callback()
+
 
 ############################################################【后台管理系统API】############################################################
 
@@ -1495,8 +1522,10 @@ def admin_finance_withdrawal_audit_export():
 @app.route(f"{url}/test", methods=["POST"])
 def test():
     data = request.args
-    print(data)
-    return data
+    import xmltodict
+    xml = xmltodict.unparse({"xml": data}, pretty=True, full_document=False).encode("utf-8")
+    # return jsonify({"return_code": "SUCCESS", "return_msg": "OK"})
+    return Response(xml)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
