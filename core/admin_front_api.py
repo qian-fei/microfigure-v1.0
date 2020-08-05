@@ -6,8 +6,8 @@
 @Author: money 
 """
 ##################################【后台前台设置模块】##################################
-import sys
 import os
+import sys
 # 将根目录添加到解析路径中
 BASE_DIR1 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR2 = os.path.dirname(os.path.abspath(__file__))

@@ -6,8 +6,8 @@
 @Author: money 
 """
 ##################################【app列表页、详情页模块】##################################
-import sys
 import os
+import sys
 # 将根目录添加到sys路径中
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
