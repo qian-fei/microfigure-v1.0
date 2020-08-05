@@ -129,7 +129,7 @@ def get_hot_keyword_list(limit=10):
         # 获取数据
         pipeline = [
             {"$match": {"state": {"$ne": -1}}},
-            {"$group": {"_id": {"keyword": "$keyword", "state": "$state"}, "count": {"$sum": 1}}},
+            {"$group": {"_id": {"keyword": "$keyword"}, "count": {"$sum": 1}}},
             {"$project": {"_id": 0, "keyword": "$_id.keyword", "count": 1}},
             {"$sort": SON([("count", -1)])},
             {"$limit": limit}
@@ -155,7 +155,11 @@ def post_add_keyword():
         if not keyword:
             return response(msg="Bad Request: Miss params: 'keyword'", code=1, status=400)
         # 添加
-        manage.client["user_search"].insert({"user_id": user_id, "keyword": keyword, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        doc = manage.client["user_search"].find_one({"user_id": user_id, "keyword": keyword})
+        if not doc:
+            manage.client["user_search"].insert({"user_id": user_id, "keyword": keyword, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        else:
+            return response(msg="关键词已存在，请勿重复添加", code=1)
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -169,7 +173,7 @@ def put_delete_keyword():
         keyword = request.json.get("keyword")
         if not keyword:
             return response(msg="Bad Request: Miss params: 'keyword'", code=1, status=400)
-        doc = manage.client["user_search"].update({"keyword": keyword}, {"$set": {"state": -1}})
+        doc = manage.client["user_search"].update({"keyword": keyword}, {"$set": {"state": -1}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
         return response()
