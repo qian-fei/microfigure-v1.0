@@ -330,10 +330,11 @@ def put_audio_material_cover(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_all_works_list(domain=constant.DOMAIN):
+def get_all_works_list(domain=constant.DOMAIN, search_max=32):
     """
     图片/图集/图文作品接口
     :param domain: 域名
+    :param search_max: 搜索上限
     """
     data = {}
     try:
