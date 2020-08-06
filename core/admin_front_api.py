@@ -27,6 +27,7 @@ from constant import constant
 from app_login_api import check_token
 from app_works_api import pic_upload_api
 
+
 def get_banner(domain=constant.DOMAIN):
     """
     获取banner

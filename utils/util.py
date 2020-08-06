@@ -529,6 +529,7 @@ class ExportExcle(object):
         # 返回路径
         return f"/{foldername}/{filename}.xls"
 
+
 if __name__ == "__main__":
     check = IdCardAuth()
     t = check.check_true("50022819941129655x")
