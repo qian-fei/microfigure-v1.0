@@ -179,7 +179,7 @@ def response_headers(response):
     return response
 
 
-############################################################【趣图APP前端API】############################################################
+############################################################【微图APP前端API】############################################################
 
 
 @app.route(f"{url}/banner", methods=["GET"])
@@ -1406,6 +1406,15 @@ def admin_manage_search():
 def admin_manage_create_account():
     """后台管理员列表搜索接口"""
     return admin_system_api.post_create_account()
+
+
+@app.route(f"{url}/admin/manage/delete", methods=["PUT"])
+@auth_admin_login
+@auth_amdin_role
+def admin_manage_list_delete():
+    """后台管理员列表删除接口"""
+    return admin_system_api.put_admin_account_state()
+
 
 
 @app.route(f"{url}/admin/permission/list", methods=["GET"])
