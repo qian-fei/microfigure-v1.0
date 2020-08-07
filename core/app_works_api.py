@@ -395,7 +395,7 @@ def post_create_pic_works(label_max=9, title_max=32):
                 doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
                 if doc["n"] == 0:
                     id = base64.b64encode(os.urandom(16)).decode()
-                    manage.client["label"].insert({"uid": id, "priority": 0, "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                    manage.client["label"].insert({"uid": id, "priority": 0.0, "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
                 data = {
                     "pic_id": uid,
                     "works_id": wroks_uid
