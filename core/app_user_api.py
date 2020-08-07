@@ -1059,7 +1059,7 @@ def get_pic_wokrs_list(domain=constant.DOMAIN, length_max=32):
         num = request.args.get("num")
         content = request.args.get("content")
         state = request.args.get("state") # 0未审核，1审核中，2已上架, 3违规下架，4全部
-        type = request.args.get("type") # tp图片，tj图集
+        type = request.args.get("type") # tp图片，tj图集, yj影集
         if not page:
             return response(msg="Bad Request: Miss param 'page'.", code=1, status=400)
         if not num:
@@ -1792,7 +1792,7 @@ def post_altas_apply(label_length_max=20, title_length_max=32, domain=constant.D
 
 def post_altas_detail_editor(label_length_max=20, title_length_max=32, domain=constant.DOMAIN):
     """
-    图集上架申请
+    图集上架申请编辑
     :param label_length_max: 标签上限
     :param title_length_max: 标题上限
     :param domain: 域名

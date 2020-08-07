@@ -275,8 +275,8 @@ def get_user_history_label(label_max=20):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_search_label():
-    """搜索标签接口"""
+def get_altas_search_label():
+    """图集搜索标签接口"""
     keyword_list = []
     try:
         # 参数
@@ -529,6 +529,149 @@ def post_create_article_works(domain=constant.DOMAIN):
             manage.client["user_statistical"].insert(condition)
         return response(data=uid)
         return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_video_material_upload(domain=constant.DOMAIN):
+    """
+    影集图片上传接口
+    :param domain: 域名
+    """
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        data_list = pic_upload_api(user_id)
+        # 入库
+        temp_list = []
+        for obj in data_list:
+            uid = base64.b64encode(os.urandom(32)).decode()
+            context = GenerateImage.generate_image_small(obj, "files")
+            condition = {"uid": uid, "user_id": user_id, "pic_url": context["file_path_o"], "big_pic_url": context["file_path_b"], "thumb_url": context["file_path_t"], "size": obj["size"],
+                         "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "format": context["extension"].upper(), "label": []
+            }
+            temp_list.append(condition)
+        manage.client["pic_material"].insert(temp_list)
+        id_list = [doc for doc in cursor]
+        pipeline = [
+            {"$match": {"_id": {"$in": id_list}}},
+            {"$project": {"_id": 0, "uid": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "format": 1, "pic_url": 1}}
+        ]
+        cursor = manage.client["pic_material"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        return response(data=data_list)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_video_search_label():
+    """影集搜索标签接口"""
+    keyword_list = []
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        keyword = request.args.get("keyword")
+        # 校验
+        if not keyword:
+            return response(msg="请输入关键词", code=1)
+
+        # 模糊查询
+        cursor = manage.client["label"].find({"label": {"$regex": keyword}, "type": "video"}, {"_id": 0, "label": 1})
+        for doc in cursor:
+            keyword_list.append(doc["label"])
+        if keyword in keyword_list:
+            keyword_list = list(set(keyword_list))
+            keyword_list.remove(keyword)
+            keyword_list.insert(0, keyword)
+        return response(data=keyword_list)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=constant.DOMAIN):
+    """
+    影集创作
+    :param title_max: 标题字符上限
+    :param pic_id_max: 允许选择图片的上限
+    :param domain: 域名
+    """
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        cover_url = request.json.get("cover_url")
+        title = request.json.get("title")
+        label = request.json.get("label")
+        pic_id_list = request.json.get("pic_id_list") # array
+        me_works_id = request.json.get("me_works_id")
+        if not title:
+            return response(msg="Bad Request: Miss param 'title'.", code=1, status=400)
+        if len(title) > title_max:
+            return response(msg=f"标题上限{title_max}个字符", code=1)
+        if not label:
+            return response(msg="Bad Request: Miss param 'label'.", code=1, status=400)
+        if len(label) > label_max:
+            return response(msg=f"最多允许选择{label_max}", code=1)
+        if not pic_id_list:
+            return response(msg="Bad Request: Miss param 'pic_id_list'.", code=1, status=400)
+        if len(pic_id_list) <= 1:
+            return response(msg="图集至少2张图片哟", code=1)
+        if len(pic_id_list) > pic_id_max:
+            return response(msg=f"最多允许选择{pic_id_max}张图片", code=1)
+        if not me_works_id:
+            return response(msg="Bad Request: Miss params: 'me_works_id'.", code=1, status=400)
+        # 制作影集作品
+        cover_url = cover_url.replace(domain, "")
+        number = genrate_file_number()
+        keyword = list(jieba.cut(title))
+        condition = {"uid": me_works_id, "user_id": user_id, "pic_id": pic_id_list, "type": "uj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
+                     "label": label, "state": 0, "is_recommend": False, "is_portrait": False, "is_products": False, "pic_num": len(pic_id_list), "like_num": 0, "comment_num": 0, 
+                     "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+        }
+        manage.client["works"].insert(condition)
+        # 更新作品数
+        doc = manage.client["user"].update({"uid": user_id}, {"$inc": {"works_num": 1}})
+        if doc["n"] == 0:
+            return response(msg="'user' Update failed.", code=1, status=400)
+        # 统计
+        # 当前day天
+        dtime = datetime.datetime.now()
+        time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+        timeArray = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+        today_stamp = int(time.mktime(timeArray.timetuple()) * 1000)
+        doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": today_stamp})
+        if doc:
+            doc = manage.client["user_statistical"].update({"user_id": user_id, "date": today_stamp}, {"$inc": {"works_num": 1}, "$set": {"update_time": int(time.time() * 1000)}})
+            if doc["n"] == 0:
+                return response(msg="Update failed.", code=1, status=400)
+        else:
+            condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "date": today_stamp, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
+        # 历史标签表和标签表
+        for i in label:
+            # 记录历史标签
+            condition = {"user_id": user_id, "label": i, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            doc = manage.client["history_label"].find_one({"user_id": user_id, "label": i})
+            if not doc:
+                 manage.client["history_label"].insert(condition)
+            # 更新标签表中works_num
+            doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
+            if doc["n"] == 0:
+                id = base64.b64encode(os.urandom(16)).decode()
+                manage.client["label"].insert({"uid": id, "priority": 0, "type": "video", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        data = {
+            "pic_id": pic_id_list[0],
+            "works_id": me_works_id
+        }
+        return response(data=data)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

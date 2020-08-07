@@ -562,7 +562,7 @@ def get_pic_works_detail(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "portrait": {"$arrayElemAt": ["$portrait_item", 0]}, "product": {"$arrayElemAt": ["$products_item", 0]}, "pic_info": {"$arrayElemAt": ["$pic_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "account": "$user_info.account", "pic_url": "$pic_info.pic_url", "size": "$pic_info.size", "big_pic_url": "$pic_info.big_pic_url"}},
             {"$unset": ["user_item", "user_info", "pic_item", "pic_info", "portrait._id", "products._id"]},
-            {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "format": 1, "size": 1, "portrait": {"$ifNull": ["$portrait", "无"]}, "product": {"$ifNull": ["$product", "无"]}, "price_item": 1, "pic_url": {"$concat": [domain, "$pic_url"]},
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "format": 1, "size": "$size", "portrait": {"$ifNull": ["$portrait", "无"]}, "product": {"$ifNull": ["$product", "无"]}, "price_item": 1, "pic_url": {"$concat": [domain, "$pic_url"]},
                           "nick": 1, "account": 1, "tag": 1, "state": 1, "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)

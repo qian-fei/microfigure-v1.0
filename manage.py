@@ -583,9 +583,9 @@ def user_histroy_label():
 
 @app.route(f"{url}/user/label/search", methods=["GET"])
 @auth_user_login
-def user_label_searc():
-    """用户搜索标签接口"""
-    return app_works_api.get_search_label()
+def user_altas_label_searc():
+    """图集搜索标签接口"""
+    return app_works_api.get_altas_search_label()
 
 
 @app.route(f"{url}/user/creation/pic", methods=["POST"])
@@ -887,6 +887,27 @@ def balance_recharge_callback_alipay():
 def balance_recharge_callback_wechat():
     """余额充值微信回调接口"""
     return app_order_api.post_top_up_wechat_callback_verify()
+
+
+@app.route(f"{url}/video/label/search", methods=["GET"])
+@auth_user_login
+def user_video_label_searc():
+    """影集搜索标签接口"""
+    return app_works_api.get_video_search_label()
+
+
+@app.route(f"{url}/video/pic/upload", methods=["POST"])
+@auth_user_login
+def user_video_pic_upload():
+    """影集图片素材上传接口"""
+    return app_works_api.post_video_material_upload()
+
+
+@app.route(f"{url}/user/video/create", methods=["POST"])
+@auth_user_login
+def user_video_works_create():
+    """影集作品制作接口"""
+    return app_works_api.post_video_collect_works()
 
 
 ############################################################【后台管理系统API】############################################################
