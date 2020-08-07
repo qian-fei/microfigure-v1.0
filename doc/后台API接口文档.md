@@ -1621,6 +1621,8 @@ GET
 | id_card_a_url |  是  |  String  | 身份证正面 |      |
 | id_card_b_url |  是  |  String  | 身份证反面 |      |
 |  repre_works  |  是  |  Array   | 代表作品   |      |
+|   home_addr   |  是  |  String  | 现居地址   |      |
+| id_card_addr  |  是  |  String  | 身份证地址 |      |
 
 返回示例：
 
@@ -1635,6 +1637,8 @@ GET
         "id_card": "5002281xxxxxxx",
         "id_card_a_url": "http://www.baidu.com/img/1.png",
         "id_card_b_url": "http://www.baidu.com/img/1.png",
+        "home_addr": "重庆市",
+        "id_card_addr": "重庆市万州区",
         "repre-works": [
             "http://www.baidu.com/img/1.png",
             "http://www.baidu.com/img/1.png",
