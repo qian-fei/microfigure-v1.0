@@ -296,8 +296,9 @@ temp = {
 # for doc in cursor:
 #     print(doc)
 
-def get():
-    return 1, 2, 3
+# def get():
+#     return 1, 2, 3
 
-t, r, h = get()
-print(t, r)
+# t, r, h = get()
+# print(t, r)
+
