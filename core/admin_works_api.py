@@ -370,7 +370,7 @@ def get_all_works_list(domain=constant.DOMAIN, search_max=32):
             {"$match": {"nick" if category == "nick" else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in" if type == "tj" else "$eq": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
+            {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$addFields": {"pic_info": {"$arrayElemAt": ["$pic_item", 0]}}}, 
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"thumb_url": {"$concat": [domain, "$$item.thumb_url"]}}}}}},
             {"$unset": ["user_item", "user_info", "pic_temp_item", "pic_info"]},
@@ -558,12 +558,12 @@ def get_pic_works_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "price", "let": {"price_id": "$price_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$price_id"]}}}, 
                                                                                          {"$project": {"_id": 0, "format": 1, "price": 1, "pic_url": {"$concat": [domain, "$pic_url"]}}}], "as": "price_item"}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}, 
-                                                                                            {"$project": {"_id": 0, "format": 1, "price": 1, "type": 1}}], "as": "pic_item"}},
+                                                                                            {"$project": {"_id": 0, "format": 1, "big_pic_url": 1, "pic_url": 1}}], "as": "pic_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "portrait": {"$arrayElemAt": ["$portrait_item", 0]}, "product": {"$arrayElemAt": ["$products_item", 0]}, "pic_info": {"$arrayElemAt": ["$pic_item", 0]}}},
-            {"$addFields": {"nick": "$user_info.nick", "account": "$user_info.account", "pic_url": "$pic_info.pic_url", "size": "$pic_info.size"}},
+            {"$addFields": {"nick": "$user_info.nick", "account": "$user_info.account", "pic_url": "$pic_info.pic_url", "size": "$pic_info.size", "big_pic_url": "$pic_info.big_pic_url"}},
             {"$unset": ["user_item", "user_info", "pic_item", "pic_info", "portrait._id", "products._id"]},
-            {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "format": 1, "size": 1, "portrait": {"$ifNull": ["$portrait", "无"]}, "product": {"$ifNull": ["$product", "无"]}, "price_item": 1,
-                          "nick": 1, "account": 1, "tag": 1, "state": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "format": 1, "size": 1, "portrait": {"$ifNull": ["$portrait", "无"]}, "product": {"$ifNull": ["$product", "无"]}, "price_item": 1, "pic_url": {"$concat": [domain, "$pic_url"]},
+                          "nick": 1, "account": 1, "tag": 1, "state": 1, "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
