@@ -207,7 +207,7 @@ def get_audio_material_list(search_max=32, domain=constant.DOMAIN):
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "nick": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
-                          "cover_url": {"$concat": [domain, "$pic_url"]}, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "audio_url": {"$concat": [domain, "$audio_url"]}}}
+                          "cover_url": {"$concat": [domain, "$cover_url"]}, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "audio_url": {"$concat": [domain, "$audio_url"]}}}
         ]
         cursor = manage.client["audio_material"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
