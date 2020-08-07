@@ -266,7 +266,7 @@ def get_audio_material_detail(domain=constant.DOMAIN):
             {"$addFields": {"nick": "$user_info.nick", "account": "$user_info.account"}},
             {"$unset": ["user_item", "user_info"]},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "nick": 1, "account": 1, "format": 1, "size": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
-                          "covre_url": {"$concat": [domain, "$pic_url"]}, "audio_url": {"$concat": [domain, "$audio_url"]}}}
+                          "cover_url": {"$concat": [domain, "$cover_url"]}, "audio_url": {"$concat": [domain, "$audio_url"]}}}
         ]
         cursor = manage.client["audio_material"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
