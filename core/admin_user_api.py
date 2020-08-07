@@ -631,7 +631,7 @@ def get_user_audit_detail(domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"uid": user_id}},
             {"$project": {"_id": 0, "nick": 1, "account": 1, "mobile": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "id_card_name": 1, "id_card": 1, 
-                          "id_card_a_url": {"$concat": [domain, "$id_card_a_url"]}, "id_card_b_url": {"$concat": [domain, "$id_card_b_url"]}, 
+                          "id_card_a_url": {"$concat": [domain, "$id_card_a_url"]}, "id_card_b_url": {"$concat": [domain, "$id_card_b_url"]}, "home_addr": 1, "id_card_addr": 1,
                           "repre_works": {"$map": {"input": "$repre_works", "as": "item", "in": {"$concat": [domain, "$$item"]}}}
             }}
         ]

@@ -1950,7 +1950,7 @@ def post_user_auth_cameraman(title_length_max=32, addr_length_max=128, domain=co
             pic = i.replace(domain, "")
             temp_list.append(pic)
         # 入库
-        condition = {"id_card_name": name, "id_card": id_card, "id_card_a_url": id_card_a_url, "id_card_b_url": id_card_b_url, "repre_works": temp_list, "auth": 1}
+        condition = {"id_card_name": name, "id_card": id_card, "id_card_a_url": id_card_a_url, "id_card_b_url": id_card_b_url, "repre_works": temp_list, "auth": 1, "id_card_addr": addr}
         doc = manage.client["user"].update({"uid": user_id}, {"$set": condition})
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
