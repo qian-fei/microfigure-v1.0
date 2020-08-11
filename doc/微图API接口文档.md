@@ -682,32 +682,32 @@ GET
 
 返回字段：
 
-|   返回字段   | 必须 | 字段类型 | 字段说明   | 备注                                     |
-| :----------: | :--: | :------: | :--------- | ---------------------------------------- |
-|     uid      |  是  |  String  | 作品唯一id | 此uid和me作品id同为一个                  |
-|   pic_item   |  否  |  Array   | 素材       |                                          |
-|  video_url   |  是  |  String  | 视频路径   |                                          |
-|  audio_url   |  是  |  String  | 音频路径   |                                          |
-|    number    |  是  |  String  | 文件编号   |                                          |
-|    format    |  是  |  String  | 文件格式   |                                          |
-|   user_id    |  是  |  String  | 用户id     |                                          |
-|     nick     |  是  |  String  | 昵称       |                                          |
-| head_img_url |  是  |  String  | 头像       |                                          |
-|  works_num   |  是  | Integer  | 作品量     |                                          |
-|    title     |  是  |  String  | 标题       |                                          |
-|     desc     |  是  |  String  | 描述       |                                          |
-|    label     |  否  |  Array   | 标签       | 图文无标签                               |
-|    state     |  是  | Integer  | 状态       | -1删除  0未审核（默认） 1审核中  2已上架 |
-|  recommend   |  是  | Boolean  | 是否推荐   | true推荐  false取消推荐                  |
-|     type     |  是  |  String  | 分类       | tj图集  yj影集  tw图文 lj链接 pc图片     |
-|   pic_num    |  否  | Integer  | 图片量     | 图文无图片量  图片为1                    |
-|   like_num   |  是  | Integer  | 点赞量     |                                          |
-| comment_num  |  是  | Integer  | 评论量     |                                          |
-|  share_num   |  是  | Integer  | 分享量     |                                          |
-|  browse_num  |  是  | Integer  | 浏览量     |                                          |
-| create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳                               |
-| update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                               |
-|  is_follow   |  是  | Boolean  | 是否关注   | true已关注，false未关注                  |
+|   返回字段   | 必须 | 字段类型 | 字段说明   | 备注                                                         |
+| :----------: | :--: | :------: | :--------- | ------------------------------------------------------------ |
+|     uid      |  是  |  String  | 作品唯一id | 此uid和me作品id同为一个                                      |
+|   pic_item   |  否  |  Array   | 素材       | [{uid, works_id, works_state, big_pic_url,thumb_url}] works_id和works_state不是一定存在 |
+|  video_url   |  是  |  String  | 视频路径   |                                                              |
+|  audio_url   |  是  |  String  | 音频路径   |                                                              |
+|    number    |  是  |  String  | 文件编号   |                                                              |
+|    format    |  是  |  String  | 文件格式   |                                                              |
+|   user_id    |  是  |  String  | 用户id     |                                                              |
+|     nick     |  是  |  String  | 昵称       |                                                              |
+| head_img_url |  是  |  String  | 头像       |                                                              |
+|  works_num   |  是  | Integer  | 作品量     |                                                              |
+|    title     |  是  |  String  | 标题       |                                                              |
+|     desc     |  是  |  String  | 描述       |                                                              |
+|    label     |  否  |  Array   | 标签       | 图文无标签                                                   |
+|    state     |  是  | Integer  | 状态       | -1删除  0未审核（默认） 1审核中  2已上架                     |
+|  recommend   |  是  | Boolean  | 是否推荐   | true推荐  false取消推荐                                      |
+|     type     |  是  |  String  | 分类       | tj图集  yj影集  tw图文 lj链接 pc图片                         |
+|   pic_num    |  否  | Integer  | 图片量     | 图文无图片量  图片为1                                        |
+|   like_num   |  是  | Integer  | 点赞量     |                                                              |
+| comment_num  |  是  | Integer  | 评论量     |                                                              |
+|  share_num   |  是  | Integer  | 分享量     |                                                              |
+|  browse_num  |  是  | Integer  | 浏览量     |                                                              |
+| create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳                                                   |
+| update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                                                   |
+|  is_follow   |  是  | Boolean  | 是否关注   | true已关注，false未关注                                      |
 
 返回示例：
 
@@ -720,7 +720,8 @@ GET
            		"uid": "7893432",	// 图片唯一id
            		"works_id": "123456", // 作品id
            		"big_pic_url": "www.baidu.com/img/1.png",	// 大图
-           		"thumb_url": "www.baidu.com/thumb/1.png", // 缩略图路径
+           		"thumb_url": "www.baidu.com/thumb/1.png", // 缩略图路径，
+               	"works_state": 2 // 图片状态
            		...
           	  	},
             	...
