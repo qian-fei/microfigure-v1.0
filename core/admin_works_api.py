@@ -344,7 +344,7 @@ def get_all_works_list(domain=constant.DOMAIN, search_max=32):
         category = request.args.get("category") # 标题title, 昵称传nick, 标签label
         state = request.args.get("state") # 0未审核，1审核中，2已上架, 3违规下架，4全部
         content = request.args.get("content")
-        type = request.args.get("type") # 图片传tp， 图集传tj, "tw"
+        type = request.args.get("type") # 图片传tp, 图集传tj, 图文传tw, 影集传yj
         # 校验参数
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
