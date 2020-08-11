@@ -1632,8 +1632,10 @@ def post_pic_apply(label_length_max=20, title_length_max=32):
                     manage.client["price"].update({"format": "扩大授权", "pic_id": doc.get("uid")}, {"$set": {"price": i["price"]}})
         else:
             cursor = manage.client["price"].find({"uid": "001"})
-            for doc in cursor:
-                manage.client["price"].update({"format": doc.get("format"), "pic_id": doc.get("uid")}, {"$set": {"price": doc.get("price"), "type": code}})
+            for i in cursor:
+                manage.client["price"].update({"format": i.get("format"), "pic_id": doc.get("uid")}, {"$set": {"price": i.get("price"), "type": code}})
+        # 改变素材库中works_state
+        manage.client["pic_material"].update({"works_id": uid}, {"$set": {"works_state": 1}})
         return response()
     except Exception as e:
         manage.log.error(e)

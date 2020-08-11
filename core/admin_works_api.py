@@ -532,9 +532,12 @@ def put_pic_works_autio_state():
             today = datetime.date.today()
             today_stamp = int(time.mktime(today.timetuple()) * 1000)
             for i in cursor:
-                doc = manage.client["user_statistical"].update({"user_id": i["user_id"], "date": today_stamp}, {"$inc": {"works_num": 1}})
+                doc = manage.client["user_statistical"].update({"user_id": i["user_id"], "date": today_stamp}, {"$inc": {"goods_num": 1}})
                 if doc["n"] == 0:
-                    manage.client["user_statistical"].insert({"user_id": i["user_id"], "date": today_stamp, "works_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                    manage.client["user_statistical"].insert({"user_id": i["user_id"], "date": today_stamp, "goods_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        doc = manage.client["works_id"].find_one({"uid": works_id})
+        if doc.get("type") == "tp":
+            manage.client["pic_material"].update({"works_id": works_id}, {"$set": {"works_state": state}})
         return response()
     except Exception as e:
         manage.log.error(e)

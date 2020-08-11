@@ -302,3 +302,6 @@ temp = {
 # t, r, h = get()
 # print(t, r)
 
+import manage
+
+manage.client["test"].update({"uid": "001"}, {"$set": {"name": "哈哈"}})
