@@ -117,6 +117,8 @@ def post_admin_login():
 def put_admin_password(pwd_length_min=6, pwd_length_max=16):
     """
     修改管理员密码
+    :param pwd_length_min: 密码最低位数
+    :param pwd_length_max: 密码最高位数
     """
     try:
         # 参数
@@ -124,17 +126,17 @@ def put_admin_password(pwd_length_min=6, pwd_length_max=16):
         old_password = request.json.get("old_password")
         new_password = request.json.get("new_password")
         if not old_password:
-            return response(msg="请输入旧密码")
+            return response(msg="请输入旧密码", code=1)
         if not new_password:
-            return response(msg="请输入新密码")
+            return response(msg="请输入新密码", code=1)
         if len(new_password) < pwd_length_min and len(new_password) > pwd_length_max:
-            return response(msg="密码6-16位")
+            return response(msg="密码6-16位", code=1)
         password_b64 = base64.b64encode(str(old_password).encode()).decode()
         doc = manage.client["user"].find_one({"uid": user_id, "password": password_b64})
         if not doc:
-            return response(msg="旧密码错误")
+            return response(msg="旧密码错误", code=1)
         if old_password == new_password:
-            return response(msg="新密码不能和旧密码相同")
+            return response(msg="新密码不能和旧密码相同", code=1)
         password_b64 = base64.b64encode(str(new_password).encode()).decode()
         manage.client["user"].update({"uid": user_id}, {"$set": {"password": password_b64}})
         return response()
