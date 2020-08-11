@@ -632,7 +632,7 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
         cover_url = cover_url.replace(domain, "")
         number = genrate_file_number()
         keyword = list(jieba.cut(title))
-        condition = {"uid": me_works_id, "user_id": user_id, "pic_id": pic_id_list, "type": "uj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
+        condition = {"uid": me_works_id, "user_id": user_id, "pic_id": pic_id_list, "type": "yj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
                      "label": label, "state": 0, "is_recommend": False, "is_portrait": False, "is_products": False, "pic_num": len(pic_id_list), "like_num": 0, "comment_num": 0, 
                      "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
         }
@@ -661,7 +661,7 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
             condition = {"user_id": user_id, "label": i, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             doc = manage.client["history_label"].find_one({"user_id": user_id, "label": i})
             if not doc:
-                 manage.client["history_label"].insert(condition)
+                manage.client["history_label"].insert(condition)
             # 更新标签表中works_num
             doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
             if doc["n"] == 0:

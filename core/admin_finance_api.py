@@ -443,6 +443,7 @@ def get_withdrawal_records_export(delta_time=30, domain=constant.DOMAIN):
         category = request.args.get("category") # order订单号，account账号
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
+        state = request.args.get("state") # 1驳回，2已完成
         timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
         timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)

@@ -439,9 +439,9 @@ def get_org_name_list():
     try:
         # 查询
         pipeline = [
-            {"$match": {"state": 1}},
+            {"$match": {"state": 1, "org_name": {"$ne": None}}},
             {"$group": {"_id": "$org_name"}},
-            {"$project": {"_id": 0, "org_name": "$_id.org_name"}}
+            {"$project": {"_id": 0, "org_name": "$_id"}}
         ]
         cursor = manage.client["user"].aggregate(pipeline)
         data_list = []

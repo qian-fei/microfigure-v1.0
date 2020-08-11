@@ -500,3 +500,36 @@
 2020-08-07 17:50:22,267 manage.py[line:43] INFO: The application has started.
 2020-08-07 17:54:43,456 manage.py[line:43] INFO: The application has started.
 2020-08-07 17:54:43,593 manage.py[line:43] INFO: The application has started.
+2020-08-10 22:50:59,248 admin_finance_api.py[line:491] ERROR: name 'state' is not defined
+2020-08-10 22:51:22,646 admin_finance_api.py[line:491] ERROR: name 'state' is not defined
+2020-08-11 00:31:38,068 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:31:57,283 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:35:45,309 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:35:57,712 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:49:15,125 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:51:50,424 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:53:45,991 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:54:12,308 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:57:57,209 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 00:58:03,251 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 08:52:33,068 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 08:53:29,312 admin_user_api.py[line:452] ERROR: 'org_name'
+2020-08-11 08:54:03,705 manage.py[line:43] INFO: The application has started.
+2020-08-11 08:54:03,853 manage.py[line:43] INFO: The application has started.
+2020-08-11 08:54:24,953 manage.py[line:43] INFO: The application has started.
+2020-08-11 08:54:25,088 manage.py[line:43] INFO: The application has started.
+2020-08-11 08:58:55,987 manage.py[line:43] INFO: The application has started.
+2020-08-11 08:58:56,123 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:02:23,084 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:02:23,225 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:04:09,836 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:04:09,973 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:09:53,045 app_list_api.py[line:676] ERROR: $in requires an array as a second argument, found: string
+2020-08-11 09:10:46,533 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:10:46,663 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:13:35,780 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:13:35,913 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:23:46,712 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:23:46,865 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:23:58,821 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:23:58,965 manage.py[line:43] INFO: The application has started.

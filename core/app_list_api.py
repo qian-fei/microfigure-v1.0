@@ -650,7 +650,7 @@ def get_video_detail(domain=constant.DOMAIN):
         # 用户uid
         user_id = g.user_data["user_id"]
         # 获取uid
-        uid= request.args.get("uid", None)
+        uid= request.args.get("works_id", None)
         if not uid:
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
        
@@ -658,7 +658,7 @@ def get_video_detail(domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"uid": uid}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
-            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
             {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
