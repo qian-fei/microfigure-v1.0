@@ -114,8 +114,10 @@ def post_admin_login():
         return response(msg="Internal Server Error: %s" % str(e), code=1, status=500)
 
 
-def put_admin_password():
-    """修改管理员密码"""
+def put_admin_password(pwd_length_min=6, pwd_length_max=16):
+    """
+    修改管理员密码
+    """
     try:
         # 参数
         user_id = request.json.get("user_id")
@@ -125,6 +127,8 @@ def put_admin_password():
             return response(msg="请输入旧密码")
         if not new_password:
             return response(msg="请输入新密码")
+        if len(new_password) < pwd_length_min and len(new_password) > pwd_length_max:
+            return response(msg="密码6-16位")
         password_b64 = base64.b64encode(str(old_password).encode()).decode()
         doc = manage.client["user"].find_one({"uid": user_id, "password": password_b64})
         if not doc:
