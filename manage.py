@@ -919,6 +919,13 @@ def admin_login():
     return admin_login_api.post_admin_login()
 
 
+@app.route(f"{url}/admin/alter/password", methods=["PUT"])
+@auth_admin_login
+def admin_alter_password():
+    """后台管理员修改密码"""
+    return admin_login_api.put_admin_password()
+
+
 @app.route(f"{url}/admin/index/collect", methods=["GET"])
 @auth_admin_login
 def admin_index_top_collect():

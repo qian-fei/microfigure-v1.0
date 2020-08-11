@@ -109,6 +109,46 @@ POST
 }
 ```
 
+##### 2.管理员修改密码
+
+请求URL：
+
+```
+/api/v1/admin/alter/password
+```
+
+请求方式：
+
+```
+PUT
+```
+
+接口说明：
+
+```
+管理员修改密码。
+```
+
+请求参数: 
+
+|   请求参数   | 必须 | 参数类型 | 参数说明 |
+| :----------: | :--: | :------: | :------- |
+|   user_id    |  是  |  String  | 用户id   |
+| old_password |  是  |  String  | 旧密码   |
+| new_password |  是  |  String  | 新密码   |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
 #### 二、首页模块
 
 ##### 1.顶、底部统计接口
