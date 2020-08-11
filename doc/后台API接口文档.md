@@ -3555,13 +3555,13 @@ GET
 
 请求参数:  
 
-| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注                          |
-| :------: | :--: | :------: | :------- | ----------------------------- |
-|   num    |  是  | Integer  | 页数     |                               |
-|   page   |  是  | Integer  | 页码     |                               |
-| content  |  否  |  String  | 内容     |                               |
-| category |  是  |  String  | 分类     | 标题title, 账号account        |
-|   type   |  是  |  String  | 类型     | 图片传tp， 图集传tj, 图文传tw |
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注                                                   |
+| :------: | :--: | :------: | :------- | ------------------------------------------------------ |
+|   num    |  是  | Integer  | 页数     |                                                        |
+|   page   |  是  | Integer  | 页码     |                                                        |
+| content  |  否  |  String  | 内容     |                                                        |
+| category |  是  |  String  | 分类     | 标题title, 账号account                                 |
+|   type   |  是  |  String  | 类型     | 图片传tp， 图集传tj, 图文传tw，影集传yj，默认传defualt |
 
 返回字段：
 

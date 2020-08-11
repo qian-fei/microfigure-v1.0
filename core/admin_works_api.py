@@ -332,7 +332,7 @@ def put_audio_material_cover(domain=constant.DOMAIN):
 
 def get_all_works_list(domain=constant.DOMAIN, search_max=32):
     """
-    图片/图集/图文作品接口
+    图片/图集/图文/影集作品接口
     :param domain: 域名
     :param search_max: 搜索上限
     """
@@ -472,7 +472,7 @@ def get_works_audit_list(search_max=32, domain=constant.DOMAIN):
         page = request.args.get("page") # ≥1
         category = request.args.get("category") # 标题title, 账号account
         content = request.args.get("content")
-        type = request.args.get("type") # 图片传tp， 图集传tj, 图文传tw
+        type = request.args.get("type") # 图片传tp， 图集传tj, 图文传tw, 影集yj, 全部传defualt
         # 校验参数
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
@@ -488,7 +488,8 @@ def get_works_audit_list(search_max=32, domain=constant.DOMAIN):
             return response(msg="Bad Request: Params 'type' is error.", code=1, status=400)
         # 查询
         pipeline = [
-            {"$match": {("title" if category == "title" else "account") if content else "null": {"$regex": content} if content else None, "type": type, "state": 1}},
+            {"$match": {("title" if category == "title" else "account") if content else "null": {"$regex": content} if content else None, 
+                         "type" if type != "default" else "null": type if type != "default" else None, "state": 1}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
