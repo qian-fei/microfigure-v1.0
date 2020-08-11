@@ -216,7 +216,7 @@ def get_withdrawal_records(delta_time=30):
                         "order" if category == "order" and content else "null": {"$regex": content} if category == "order" and content else None}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"user_account": "$user_info.account"}},
+            {"$addFields": {"account": "$user_info.account"}},
             {"$match": {"account" if category == "account" and content else "null": {"$regex": content} if category == "account" and content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
@@ -232,7 +232,7 @@ def get_withdrawal_records(delta_time=30):
                         "order" if category == "order" and content else "null": {"$regex": content} if category == "order" and content else None}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"user_account": "$user_info.account"}},
+            {"$addFields": {"account": "$user_info.account"}},
             {"$match": {"account" if category == "account" and content else "null": {"$regex": content} if category == "account" and content else None}},
             {"$count": "count"}
         ]
@@ -308,7 +308,7 @@ def get_order_recharge(delta_time=30):
                         "channel": {"$in": ["支付宝", "微信"]} if channel == "default" else channel}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"user_account": "$user_info.account"}},
+            {"$addFields": {"account": "$user_info.account"}},
             {"$match": {"account" if category == "account" and content else "null": {"$regex": content} if category == "account" and content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
@@ -325,7 +325,7 @@ def get_order_recharge(delta_time=30):
                         "channel": {"$in": ["支付宝", "微信"]} if channel == "default" else channel}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"user_account": "$user_info.account"}},
+            {"$addFields": {"account": "$user_info.account"}},
             {"$match": {"account" if category == "account" and content else "null": {"$regex": content} if category == "account" and content else None}},
             {"$count": "count"}
         ]
