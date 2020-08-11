@@ -603,3 +603,13 @@
 2020-08-11 16:11:22,300 manage.py[line:43] INFO: The application has started.
 2020-08-11 16:12:13,336 manage.py[line:43] INFO: The application has started.
 2020-08-11 16:12:13,471 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:14:44,313 admin_works_api.py[line:543] ERROR: 'NoneType' object has no attribute 'get'
+2020-08-11 16:14:49,450 admin_works_api.py[line:543] ERROR: 'NoneType' object has no attribute 'get'
+2020-08-11 16:15:03,043 admin_works_api.py[line:543] ERROR: 'NoneType' object has no attribute 'get'
+2020-08-11 16:16:04,546 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:16:04,683 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:17:27,750 admin_works_api.py[line:543] ERROR: 'NoneType' object has no attribute 'get'
+2020-08-11 16:21:45,068 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:21:45,240 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:22:05,736 manage.py[line:43] INFO: The application has started.
+2020-08-11 16:22:05,875 manage.py[line:43] INFO: The application has started.
