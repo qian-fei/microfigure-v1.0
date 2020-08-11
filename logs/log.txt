@@ -560,3 +560,5 @@
 2020-08-11 10:47:50,470 manage.py[line:43] INFO: The application has started.
 2020-08-11 10:48:35,419 manage.py[line:43] INFO: The application has started.
 2020-08-11 10:48:35,555 manage.py[line:43] INFO: The application has started.
+2020-08-11 11:32:27,232 manage.py[line:43] INFO: The application has started.
+2020-08-11 11:32:27,376 manage.py[line:43] INFO: The application has started.
