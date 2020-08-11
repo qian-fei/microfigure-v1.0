@@ -500,14 +500,11 @@ def post_create_org_account(domain=constant.DOMAIN, length_max=32, sign_length_m
             return response(msg="请输入机构名", code=1)
         if group not in ["comm", "auth"]:
             return response(msg="请选择用户组", code=1)
-        if not head_img_url:
-            return response(msg="Bad Request: Miss params: 'head_img_url'.", code=1, status=400)
-        if not background_url:
-            return response(msg="Bad Request: Miss params: 'background_url'.", code=1, status=400)
             
         head_img_url = head_img_url.replace(domain, "")
         background_url = background_url.replace(domain, "")
         # 入库
+        uid = base64.b64encode(os.urandom(32)).decode()
         condition = {
             "uid": uid, "nick": nick, "account": account, "label": label, "sex": sex, "mobile": mobile, "sign": sign, "belong": belong, "org_name": org_name, "group": group, 
             "head_img_url": head_img_url, "background_url": background_url

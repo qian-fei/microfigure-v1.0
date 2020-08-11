@@ -1560,15 +1560,15 @@ POST
 | -------------- | ---- | -------- | -------- | ---------------------------- |
 | nick           | 是   | String   | 昵称     |                              |
 | account        | 是   | String   | 账号     |                              |
-| label          | 是   | String   | 标签     | 最多20个                     |
+| label          | 是   | Array    | 标签     | 最多20个                     |
 | sex            | 是   | String   | 性别     | 男 女 保密                   |
 | mobile         | 是   | String   | 手机     |                              |
 | sign           | 是   | String   | 签名     |                              |
 | belong         | 是   | String   | 账号类型 | 主账号master, 子账号slave    |
 | org_name       | 是   | String   | 机构名   |                              |
 | group          | 是   | String   | 用户组   | comm一般用户，auth认证摄影师 |
-| head_img_url   | 是   | String   | 头像     |                              |
-| background_url | 是   | String   | 背景图   |                              |
+| head_img_url   | 否   | String   | 头像     |                              |
+| background_url | 否   | String   | 背景图   |                              |
 
 返回字段：无
 

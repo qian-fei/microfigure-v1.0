@@ -541,3 +541,8 @@
 2020-08-11 09:28:13,998 manage.py[line:43] INFO: The application has started.
 2020-08-11 09:38:55,027 manage.py[line:43] INFO: The application has started.
 2020-08-11 09:38:55,168 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:52:24,408 admin_user_api.py[line:518] ERROR: name 'uid' is not defined
+2020-08-11 09:55:16,676 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:55:16,806 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:58:38,965 manage.py[line:43] INFO: The application has started.
+2020-08-11 09:58:39,103 manage.py[line:43] INFO: The application has started.
