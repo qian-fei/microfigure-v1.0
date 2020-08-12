@@ -77,8 +77,8 @@ def post_material_upload_common(domain=constant.DOMAIN):
     try:
         # 参数
         user_id = g.user_data["user_id"]
-        if not user_id:
-            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        # if not user_id:
+        #     return response(msg="Bad Request: User not logged in.", code=1, status=400)
         pic_list = request.files.getlist("pic_list[]")
         if not pic_list:
             return response(msg="Bad Request: Miss param: 'pic_list'.", code=1, status=400)
