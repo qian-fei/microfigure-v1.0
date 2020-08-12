@@ -68,10 +68,11 @@ def get_user_list(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_user_filter_list(search_max=16):
+def get_user_filter_list(search_max=16, domain=constant.DOMAIN):
     """
     用户列表筛选
     :param search_max: 搜索内容的最大字符数
+    :param domain: 域名
     """
     data = {}
     try:
@@ -96,7 +97,7 @@ def get_user_filter_list(search_max=16):
             {"$match": {"type": "user", "state": {"$ne": -1}, ("nick" if category == "nick" else "account") if content else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$project": {"_id": 0, "uid": 1, "head_img_url": 1, "nick": 1, "account": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
+            {"$project": {"_id": 0, "uid": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "nick": 1, "account": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
                           "group": 1, "state": 1}}
         ]
         cursor = manage.client["user"].aggregate(pipeline)
@@ -389,10 +390,11 @@ def get_org_list():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_org_filter_list(search_max=16):
+def get_org_filter_list(search_max=16, domain=constant.DOMAIN):
     """
     机构列表筛选
     :param search_max: 搜索内容最大字符数
+    :param domain: 域名
     """
     data = {}
     try:
@@ -421,7 +423,7 @@ def get_org_filter_list(search_max=16):
                         ("nick" if category == "nick" else "org_name") if content else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$project": {"_id": 0, "uid": 1, "org_name": 1, "belong": 1, "head_img_url": 1, "nick": 1, "account": 1, 
+            {"$project": {"_id": 0, "uid": 1, "org_name": 1, "belong": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "nick": 1, "account": 1, 
                           "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, "group": 1, "state": 1}}
         ]
         cursor = manage.client["user"].aggregate(pipeline)
