@@ -5144,7 +5144,7 @@ GET
 }
 ```
 
-##### 11.影集创作接口
+##### 11.创作影集接口
 
 请求URL：
 
@@ -5189,6 +5189,46 @@ POST
       "pic_id": "001",
       "works_id": "002"
   },
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+##### 12.创作图文接口
+
+请求URL：
+
+```
+/api/v1/user/creation/article
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+制作图文作品
+```
+
+请求参数：
+
+| 请求参数  | 必须 | 参数类型 | 参数说明 | 备注 |
+| :-------: | :--: | :------: | :------- | ---- |
+| cover_url |  是  |  String  | 封面     |      |
+|   title   |  是  |  String  | 标题     |      |
+|  content  |  是  |  String  | 内容     |      |
+
+返回字段: 无
+
+返回示例：
+
+```json
+{
+  "data": "001", // 图文作品id
   "code": 0,
   "msg": "Request successful."
 }

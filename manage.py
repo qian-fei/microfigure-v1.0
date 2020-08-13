@@ -602,6 +602,13 @@ def user_creation_atlas_works():
     return app_works_api.post_pic_collect_works()
 
 
+@app.route(f"{url}/user/creation/article", methods=["POST"])
+@auth_user_login
+def user_creation_article_works():
+    """用户创作图文作品接口"""
+    return app_works_api.post_create_article_works()
+
+
 @app.route(f"{url}/user/material/list", methods=["GET"])
 @auth_user_login
 def user_info_material_list():

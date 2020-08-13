@@ -528,7 +528,6 @@ def post_create_article_works(domain=constant.DOMAIN):
             condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "date": today_stamp, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         return response(data=uid)
-        return response()
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

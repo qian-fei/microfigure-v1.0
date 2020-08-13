@@ -628,3 +628,21 @@
 2020-08-12 09:35:39,257 manage.py[line:43] INFO: The application has started.
 2020-08-12 09:36:18,222 manage.py[line:43] INFO: The application has started.
 2020-08-12 09:36:18,369 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:20:54,871 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:20:55,005 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:20:56,061 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:20:56,199 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:54:32,091 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:54:32,250 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:54:33,953 manage.py[line:43] INFO: The application has started.
+2020-08-12 16:54:34,145 manage.py[line:43] INFO: The application has started.
+2020-08-12 17:55:37,938 app_works_api.py[line:97] ERROR: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2020-08-13 12:21:12,137 app_works_api.py[line:97] ERROR: 400 Bad Request: The browser (or proxy) sent a request that this server could not understand.
+2020-08-13 15:24:21,745 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:24:21,894 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:24:30,993 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:24:31,136 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:24:35,718 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:24:35,861 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:27:27,067 manage.py[line:43] INFO: The application has started.
+2020-08-13 15:27:27,207 manage.py[line:43] INFO: The application has started.
