@@ -489,7 +489,7 @@ def post_pic_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=const
 
 def post_create_article_works(domain=constant.DOMAIN):
     """
-    创作图文
+    创作图文、编辑图文
     :param domain: 域名
     """
     try:
@@ -497,6 +497,7 @@ def post_create_article_works(domain=constant.DOMAIN):
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        uid = request.json.get("uid")
         title = request.json.get("title")
         content = request.json.get("content")
         cover_url = request.json.get("cover_url")
@@ -506,28 +507,32 @@ def post_create_article_works(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss param 'content'.", code=1, status=400)
         if not cover_url:
             return response(msg="Bad Request: Miss param 'cover_url'.", code=1, status=400)
-        # 入库
-        uid = base64.b64encode(os.urandom(32)).decode()
-        cover_url = cover_url.replace(domain, "")
-        condition = {"uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 1, "type": "tw", "is_recommend": False, "like_num": 0, 
-                     "comment_num": 0, "share_num": 0, "browse_num": 0, "create_time": int(time.time() * 1000), "updated_time": int(time.time() * 1000), "pic_id": [],
-        }
-        manage.client["works"].insert(condition)
-        # 统计
-        # 当前day天
-        dtime = datetime.datetime.now()
-        time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
-        timeArray = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
-        today_stamp = int(time.mktime(timeArray.timetuple()) * 1000)
-        doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": today_stamp})
-        if doc:
-            manage.client["user_statistical"].update({"user_id": user_id, "date": today_stamp}, {"$inc": {"works_num": 1}, "$set": {"update_time": int(time.time() * 1000)}})
-            if doc["n"] == 0:
-                return response(msg="Update failed.", code=1, status=400)
+        if not uid:
+            # 入库
+            uid = base64.b64encode(os.urandom(32)).decode()
+            cover_url = cover_url.replace(domain, "")
+            condition = {"uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 1, "type": "tw", "is_recommend": False, "like_num": 0, 
+                        "comment_num": 0, "share_num": 0, "browse_num": 0, "create_time": int(time.time() * 1000), "updated_time": int(time.time() * 1000), "pic_id": [],
+            }
+            manage.client["works"].insert(condition)
+            # 统计
+            # 当前day天
+            dtime = datetime.datetime.now()
+            time_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+            timeArray = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+            today_stamp = int(time.mktime(timeArray.timetuple()) * 1000)
+            doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": today_stamp})
+            if doc:
+                manage.client["user_statistical"].update({"user_id": user_id, "date": today_stamp}, {"$inc": {"works_num": 1}, "$set": {"update_time": int(time.time() * 1000)}})
+                if doc["n"] == 0:
+                    return response(msg="Update failed.", code=1, status=400)
+            else:
+                condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "date": today_stamp, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                manage.client["user_statistical"].insert(condition)
+            return response(data=uid)
         else:
-            condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "date": today_stamp, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-            manage.client["user_statistical"].insert(condition)
-        return response(data=uid)
+            manage.client["works"].update({"uid": uid}, {"$set": {"cover_url": cover_url, "content": content, "title": title}})
+            return response()
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

@@ -5218,6 +5218,7 @@ POST
 
 | 请求参数  | 必须 | 参数类型 | 参数说明 | 备注 |
 | :-------: | :--: | :------: | :------- | ---- |
+|    uid    |  否  |  String  | 作品id   |      |
 | cover_url |  是  |  String  | 封面     |      |
 |   title   |  是  |  String  | 标题     |      |
 |  content  |  是  |  String  | 内容     |      |
@@ -5228,7 +5229,7 @@ POST
 
 ```json
 {
-  "data": "001", // 图文作品id
+  "data": "001", // 制作时为图文id,编辑时为null
   "code": 0,
   "msg": "Request successful."
 }
