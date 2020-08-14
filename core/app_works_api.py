@@ -524,7 +524,7 @@ def post_create_article_works(domain=constant.DOMAIN):
             today_stamp = int(time.mktime(timeArray.timetuple()) * 1000)
             doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": today_stamp})
             if doc:
-                manage.client["user_statistical"].update({"user_id": user_id, "date": today_stamp}, {"$inc": {"works_num": 1}, "$set": {"update_time": int(time.time() * 1000)}})
+                doc = manage.client["user_statistical"].update({"user_id": user_id, "date": today_stamp}, {"$inc": {"works_num": 1}, "$set": {"update_time": int(time.time() * 1000)}})
                 if doc["n"] == 0:
                     return response(msg="Update failed.", code=1, status=400)
             else:

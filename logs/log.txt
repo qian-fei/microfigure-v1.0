@@ -692,3 +692,32 @@
 2020-08-14 13:34:42,584 manage.py[line:43] INFO: The application has started.
 2020-08-14 13:34:43,804 manage.py[line:43] INFO: The application has started.
 2020-08-14 13:34:43,961 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:43:31,626 app_works_api.py[line:538] ERROR: 'n'
+2020-08-14 13:46:00,425 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:46:00,583 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:04:14,853 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:04:14,988 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:08:28,493 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:08:28,632 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:11:03,639 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:11:03,772 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:11:14,451 app_list_api.py[line:472] ERROR: $in requires an array as a second argument, found: string
+2020-08-14 14:11:18,713 app_list_api.py[line:472] ERROR: $in requires an array as a second argument, found: string
+2020-08-14 14:11:50,525 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:11:50,664 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:15:33,545 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:15:33,701 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:24,773 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:24,914 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:50,709 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:50,907 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:51,984 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:25:52,124 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:29:54,612 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:29:54,750 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:33:04,232 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:33:04,421 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:37:27,850 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:37:27,989 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:37:37,246 manage.py[line:43] INFO: The application has started.
+2020-08-14 14:37:37,382 manage.py[line:43] INFO: The application has started.

@@ -100,7 +100,7 @@ def user_works_api(user_id, page, num, domain=constant.DOMAIN):
                             "browse_info": {"$arrayElemAt": ["$browse_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]}, "audio_info": {"$arrayElemAt": ["$audio_item", 0]}, 
                             "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"video_url": "$video_info.video_url", "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, 
-                            "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+                            "cover_url": {"$concat": [domain, "$cover_url"]}, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info", "browse_item"]},
             {"$project": {"_id": 0}},
             {"$sort": SON([("create_time", -1)])}

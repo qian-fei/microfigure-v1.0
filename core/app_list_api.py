@@ -396,9 +396,10 @@ def get_hot_article_list(hot_max=10):
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 热点文章
         pipeline = [
-            {"$match": {"$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], "state": 2}},
+            {"$match": {"type": "tw", "state": 2}},
+            # {"$match": {"$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], "state": 2}},
             {"$lookup": {"from": "blacklist", "let": {"user": user_id, "uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$user_id","$$user"]}, {"$in": ["$black_id", ["$$uid", "$$user"]]}]}}}], "as": "black_item"}},
-            {"$match": {"black_item": {"$eq": None}}},
+            {"$match": {"black_item": {"$eq": []}}},
             {"$sort": SON([("browse_num", -1)])},
             {"$limit": hot_max},
             {"$project": {"_id": 0}}
@@ -446,19 +447,19 @@ def get_article_list(domain=constant.DOMAIN):
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 图文作品
         pipeline = [
-            {"$match": {"state": 2}},
+            {"$match": {"state": 2, "type": "tw"}},
             {"$lookup": {"from": "blacklist", "let": {"user": user_id, "uid": "$uid"}, 
                          "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$user_id","$$user"]}, {"$in": ["$black_id", ["$$uid", "$$user"]]}]}}}], "as": "black_item"}},
-            {"$match": {"black_item": {"$eq": None}}},                                                                                                      
+            {"$match": {"black_item": {"$eq": []}}},                                                                                                      
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
             {"$lookup": {"from": "browse_records", "let": {"works_id": "$uid", "user_id": "$user_id"}, 
                          "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]}, {"$eq": ["$user_id", user_id]}]}}}], "as": "browse_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", 
-                            "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}},
+                            "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
                             "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
             {"$unset": ["pic_item._id", "pic_item.pic_url", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
