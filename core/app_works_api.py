@@ -512,7 +512,7 @@ def post_create_article_works(domain=constant.DOMAIN):
             # 入库
             uid = base64.b64encode(os.urandom(32)).decode()
             cover_url = cover_url.replace(domain, "")
-            condition = {"uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 1, "type": "tw", "is_recommend": False, "like_num": 0, 
+            condition = {"uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 0, "type": "tw", "is_recommend": False, "like_num": 0, 
                         "comment_num": 0, "share_num": 0, "browse_num": 0, "create_time": int(time.time() * 1000), "updated_time": int(time.time() * 1000), "pic_id": [],
             }
             manage.client["works"].insert(condition)
