@@ -437,7 +437,7 @@ def get_article_list(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
         if sort_way and sort_way not in ["-1", "1"]:
             return response(msg="Bad Request: Parameter error: 'sort_way'.", code=1, status=400)
-        if sort_field:
+        if sort_field not in ["time", "default"]:
             return response(msg="Bad Request: Parameter error: 'sort_field'.", code=1, status=400)
         # 24小时
         today = datetime.datetime.now()
@@ -691,7 +691,7 @@ def get_article_detail(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
         pipeline = [
             {"$match": {"uid": uid}},
-            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}}}},
             {"$unset": ["user_item", "user_info"]},
@@ -699,10 +699,10 @@ def get_article_detail(domain=constant.DOMAIN):
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data = [doc for doc in cursor]
-        if not data : raise Exception("Article data does not exist")
-        return response(data=data[0])
+        
+        return response(data=data[0] if data else None)
     except Exception as e:
-        lgo.error(e)
+        manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 

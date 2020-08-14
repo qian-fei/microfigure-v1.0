@@ -302,6 +302,9 @@ temp = {
 # t, r, h = get()
 # print(t, r)
 
-import manage
+# import manage
 
-manage.client["test"].update({"uid": "001"}, {"$set": {"name": "哈哈"}})
+# manage.client["test"].update({"uid": "001"}, {"$set": {"name": "哈哈"}})
+import os
+import hashlib
+print(hashlib.md5(os.urandom(32)).hexdigest())

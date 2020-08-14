@@ -654,3 +654,41 @@
 2020-08-13 16:14:42,517 manage.py[line:43] INFO: The application has started.
 2020-08-13 16:14:43,516 manage.py[line:43] INFO: The application has started.
 2020-08-13 16:14:43,651 manage.py[line:43] INFO: The application has started.
+2020-08-14 11:11:07,239 manage.py[line:43] INFO: The application has started.
+2020-08-14 11:11:07,386 manage.py[line:43] INFO: The application has started.
+2020-08-14 11:11:08,482 manage.py[line:43] INFO: The application has started.
+2020-08-14 11:11:08,616 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:54:13,486 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:54:13,633 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:54:14,717 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:54:14,890 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:57:33,618 manage.py[line:43] INFO: The application has started.
+2020-08-14 12:57:33,787 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:09:50,759 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:09:50,890 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:23:29,325 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:23:29,465 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:23:39,862 app_list_api.py[line:705] ERROR: Article data does not exist
+2020-08-14 13:24:22,217 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:24:22,411 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:25:54,109 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:25:54,423 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:25:56,971 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:25:57,349 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:27:18,559 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:27:18,690 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:27:19,747 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:27:19,887 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:32:16,376 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:32:16,512 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:32:17,197 app_list_api.py[line:705] ERROR: $in requires an array as a second argument, found: string
+2020-08-14 13:32:24,953 app_list_api.py[line:705] ERROR: $in requires an array as a second argument, found: string
+2020-08-14 13:33:59,336 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:33:59,641 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:02,094 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:02,444 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:19,948 app_list_api.py[line:705] ERROR: $in requires an array as a second argument, found: string
+2020-08-14 13:34:42,447 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:42,584 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:43,804 manage.py[line:43] INFO: The application has started.
+2020-08-14 13:34:43,961 manage.py[line:43] INFO: The application has started.

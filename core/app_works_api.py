@@ -20,6 +20,7 @@ import datetime
 import manage
 import base64
 import jieba
+import hashlib
 from bson.son import SON
 from flask import request, g
 from constant import constant
