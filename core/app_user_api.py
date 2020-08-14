@@ -1059,7 +1059,7 @@ def get_pic_wokrs_list(domain=constant.DOMAIN, length_max=32):
         num = request.args.get("num")
         content = request.args.get("content")
         state = request.args.get("state") # 0未审核，1审核中，2已上架, 3违规下架，4全部
-        type = request.args.get("type") # tp图片，tj图集, yj影集
+        type = request.args.get("type") # tp图片，tj图集, yj影集, "tw"
         if not page:
             return response(msg="Bad Request: Miss param 'page'.", code=1, status=400)
         if not num:
@@ -1072,7 +1072,7 @@ def get_pic_wokrs_list(domain=constant.DOMAIN, length_max=32):
             return response(msg=f"搜索内容最多{length_max}个字符", code=1)
         if state not in ["1", "2", "3", "4", "0"]:
             return response(msg="Bad Request: Param 'state' is error.", code=1, status=400)
-        if type not in ["tp", "tj"]:
+        if type not in ["tp", "tj", "yj", "tw"]:
             return response(msg="Bad Request: Param 'type' is error.", code=1, status=400)
         # 查询
         pipeline = [

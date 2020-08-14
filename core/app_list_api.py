@@ -48,7 +48,7 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, is_recom
         # 推荐作品
         cursor = manage.client["works"].find({"is_recommend": True, "state": 2, "like_num": {"$gt": like_max}}, {"_id": 0}).skip(int(page) - 1).limit(1)
         doc = [doc for doc in cursor]
-        # 综合作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
+        # TODO 综合作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
         pipeline = [
             {"$match": {"state": 2, "is_recommend": True if recommend else False}}, # "like_num": {"$gt": like_max}
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
@@ -198,7 +198,7 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=
             limit = {"$limit": ((int(num) - 1) if doc else int(num))}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
-            # "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
+            # TODO "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
             match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "is_recommend": False, "like_num": {"$gt": like_max}}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
@@ -397,7 +397,7 @@ def get_hot_article_list(hot_max=10):
         # 热点文章
         pipeline = [
             {"$match": {"type": "tw", "state": 2}},
-            # {"$match": {"$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], "state": 2}},
+            # TODO {"$match": {"$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], "state": 2}},
             {"$lookup": {"from": "blacklist", "let": {"user": user_id, "uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$user_id","$$user"]}, {"$in": ["$black_id", ["$$uid", "$$user"]]}]}}}], "as": "black_item"}},
             {"$match": {"black_item": {"$eq": []}}},
             {"$sort": SON([("browse_num", -1)])},
@@ -445,7 +445,7 @@ def get_article_list(domain=constant.DOMAIN):
         yesterday = today - datetime.timedelta(days=1)
         today_timestamp = int(time.mktime(today.timetuple())) * 1000
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
-        # 图文作品
+        # TODO 图文作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
         pipeline = [
             {"$match": {"state": 2, "type": "tw"}},
             {"$lookup": {"from": "blacklist", "let": {"user": user_id, "uid": "$uid"}, 
