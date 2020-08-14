@@ -533,7 +533,7 @@ def post_create_article_works(domain=constant.DOMAIN):
             return response(data=uid)
         else:
             manage.client["works"].update({"uid": uid}, {"$set": {"cover_url": cover_url, "content": content, "title": title}})
-            return response()
+            return response(data=uid)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
