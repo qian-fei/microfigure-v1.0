@@ -1170,3 +1170,25 @@ def post_follow_user():
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_blacklist():
+    """拉黑用户或作品"""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        black_id = request.json.get("black_id") # 被拉黑用户id或作品id
+        type = request.json.get("type") # user用户, works作品
+        if not black_id:
+            return response(msg="Bad Request: Miss params: 'black_id'.", code=1, status=400)
+        if not type:
+            return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
+        doc = manage.client["blacklist"].find_one({"user_id": user_id, "black_id": black_id}, {"$set": {"state": 1, "update_time": int(time.time() * 1000)}})
+        if doc["n"] == 0:
+            manage.client["black"].insert({"user_id": user_id, "black_id": black_id, "state": 1, "update_time": int(time.time()), "create_time": int(time.time() * 1000)})
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

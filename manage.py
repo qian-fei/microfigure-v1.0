@@ -283,6 +283,13 @@ def search_works():
     return app_list_api.get_search_works()
 
 
+@app.route(f"{url}/blacklist", methods=["POST"])
+@auth_user_login
+def user_blacklist():
+    """拉黑用户或作品接口"""
+    return app_list_api.post_blacklist()
+
+
 @app.route(f"{url}/captcha", methods=["GET"])
 def pic_captcha():
     """图片验证码接口"""
