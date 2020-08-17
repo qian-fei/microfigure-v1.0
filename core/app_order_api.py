@@ -40,7 +40,7 @@ def post_add_car():
         if is_buy not in [True, False]:
             return response(msg="Bad Request: Params 'is_buy' is error.", code=1, status=400)
         # 查询
-        doc = manager.client["works"].find_one({"uid": works_id, "state": 2})
+        doc = manage.client["works"].find_one({"uid": works_id, "state": 2})
         if not doc:
             return response(msg="Bad Request: Param 'works_id' if error.", code=1, status=400)
         pic_id = doc.get("pic_id")[0]
@@ -91,18 +91,21 @@ def get_order_detail(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
-            {"$group": {"_id": {"order": "$order", "update_time": "$update_time", "create_time": "$create_time"}, "total_amount": {"$sum": "$price", "works_item": {"$push": "$$ROOT"}}}},
-            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "update_time": "$_id.update_time", "works_item": 1, "total_amount": 1, "balance": 1}}
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "state": "$_id.state", "balance": "$_id.balance"}}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
-        data_list = [doc for doc in cursor]
+        data_list = []
+        for doc in cursor:
+            create_time = doc["create_time"]
+            now_time = int(time.time() * 1000)
+            doc["delta_time"] = (now_time - create_time) // 1000
+            data_list.append(doc)
         return response(data=data_list[0] if data_list else None)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s.", code=1, status=500)
-
-
 
 
 def get_user_car_list(domain=constant.DOMAIN):
@@ -161,7 +164,7 @@ def post_car_generate_order(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss params: 'uid_list'.", code=1, status=400)
         # 订单号
         order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
-        doc = manage.client["order"].update({"uid": {"$in": uid_list}}, {"$set": {"order": order, "state": 1, "create_time": int(time.time() * 1000)}}, multi=True)
+        doc = manage.client["order"].update({"uid": {"$in": uid_list}}, {"$set": {"order": order, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
         # 返回订单信息
@@ -171,59 +174,69 @@ def post_car_generate_order(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "create_time": 1}},
-            {"$group": {"_id": {"order": "$order", "update_time": "$update_time"}, "total_amount": {"$sum": "$price", "works_item": {"$push": "$$ROOT"}}}},
-            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1}}
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "create_time": 1}},
+            {"$group": {"_id": {"order": "$order", "balance": "$balance", "create_time": "$create_time", "state": "$state"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "balance": "$_id.balance", "state": "$_id.state", "works_item": 1, "total_amount": 1}},
+            {"$sort": SON([("create_time", -1)])}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        return response(data=data_listp[0] if data_list else None)
+        return response(data=data_list[0] if data_list else None)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s.", code=1, status=500)
 
 
-def get_user_order_list():
-    """用户订单列表"""
+def get_user_order_list(domain=constant.DOMAIN):
+    """
+    用户订单列表
+    :param domain: 域名
+    """
     data = {}
     try:
         # 参数
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
-        is_complete = request.json.get("is_complete") # true完成 false待付款
-        if is_complete not in [True, False]:
+        is_complete = request.args.get("is_complete") # true完成 false待付款
+        page = request.args.get("page")
+        num = request.args.get("num")
+        if is_complete not in ["true", "false"]:
             return response(msg="Bad Request: Params 'is_complete' is error.", code=1, status=400)
+        if not page:
+            return response(msg="Bad Request: Miss param 'page'.", code=1, status=400)
+        if not num:
+            return response(msg="Bad Request: Miss param 'num'.", code=1, status=400)
+        if int(num) < 1 or int(page) < 1:
+            return response(msg="Bad Request: Param 'page' or 'num' is error.", code=1, status=400)
+        # 更新订单状态
+        cursor = manage.client["order"].find({"user_id": user_id, "state": 1})
+        for doc in cursor:
+            create_time = doc["create_time"]
+            now_time = int(time.time() * 1000)
+            if ((now_time - create_time) // 60000) >= 30:
+                manage.client["order"].update({"order": doc["order"]}, {"$set": {"state": -1}}, multi=True)
+
         # 查询
         pipeline = [
-            {"$match": {"user_id": user_id, "state": 2 if is_complete else 1}},
+            {"$match": {"user_id": user_id, "state": 2 if is_complete == "true" else 1}},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
-            {"$group": {"_id": {"order": "$order", "update_time": "$update_time", "create_time": "$create_time"}, "total_amount": {"$sum": "$price", "works_item": {"$push": "$$ROOT"}}}},
-            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "update_time": "$_id.update_time", "works_item": 1, "total_amount": 1, "balance": 1}}
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": 1, "state": "$_id.state"}}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
-        data_list = [doc for doc in cursor]
-        # data_list = []
-        # total_amount = 0
-        # order = 0
-        # create_time = 0
-        # update_time = 0
-        # for doc in cursor:
-        #     if total_amount == 0:
-        #         order = doc["uid"]
-        #         create_time = doc["create_time"]
-        #         update_time = doc["update_time"]
-        #     total_amount += doc["price"]
-        #     data_list.append(doc)
-        # data["order"] = order
-        # data["total_amount"] = total_amount
-        # data["data_list"] = data_list if data_list else []
-        # data["create_time"] = create_time
-        # data["update_time"] = update_time
+        data_list = []
+        for doc in cursor:
+            create_time = doc["create_time"]
+            now_time = int(time.time() * 1000)
+            doc["delta_time"] = (now_time - create_time) // 1000
+            data_list.append(doc)
         return response(data=data_list if data_list else [])
     except Exception as e:
         manage.log.error(e)

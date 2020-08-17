@@ -28,7 +28,7 @@ access_log_format = '%(h)s %(l)s %(u)s %(t)s %(r)s %(s)s'
 errorlog = 'gunicorn/error.log'
 
 # 启动gunicorn命令：gunicorn -c gunicorn.py manage:app -D
-# 注意：服务器502时，就是请求处理不过来，需要增加woker；服务器504时，就是请求超时，需要增加timeout
+# 注意：服务器502时，就是请求处理不过来，需要增加woker或上调处理时间；服务器504时，就是请求超时，需要增加timeout
 """
     注意需要事先在虚拟环境下：
     pip install gevent  版本大于1.4

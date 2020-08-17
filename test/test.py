@@ -305,6 +305,10 @@ temp = {
 # import manage
 
 # manage.client["test"].update({"uid": "001"}, {"$set": {"name": "哈哈"}})
-import os
-import hashlib
-print(hashlib.md5(os.urandom(32)).hexdigest())
+# import os
+# import hashlib
+# print(hashlib.md5(os.urandom(32)).hexdigest())
+import time
+t1 = 1597116590000
+t2 = 1597120250000
+print((t2 - t1) // 60000)

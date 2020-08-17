@@ -62,6 +62,15 @@ def get_order_list(delta_time=30):
             return response(msg="Bad Request: Miss params: 'end_time'.", code=1, status=400)
         if (int(end_time) - int(start_time)) // (24 * 3600 * 1000) > delta_time:
             return response(msg=f"最多可连续查询{delta_time}天以内的记录", code=1)
+
+        # 更新订单状态
+        cursor = manage.client["order"].find({"state": 1})
+        for doc in cursor:
+            create_time = doc["create_time"]
+            now_time = int(time.time() * 1000)
+            if ((now_time - create_time) // 60000) >= 30:
+                manage.client["order"].update({"order": doc["order"]}, {"$set": {"state": -1}}, multi=True)
+                
         pipeline = [
             {"$group": {"_id": {"order": "$order", "user_id": "$user_id", "state": "$state", "create_time": "$create_time"}, "amount": {"$sum": "$price"}}},
             {"$project": {"_id": 0, "order": "$_id.order", "user_id": "$_id.user_id", "state": "$_id.state", "create_time": "$_id.create_time", "amount": 1}},

@@ -5305,7 +5305,7 @@ POST
 | 请求参数 | 必须 | 参数类型 | 参数说明 | 备注                     |
 | -------- | ---- | -------- | -------- | ------------------------ |
 | works_id | 是   | String   | 作品id   |                          |
-| price    | 是   | String   | 价格     |                          |
+| price    | 是   | Float    | 价格     |                          |
 | is_buy   | 是   | Boolean  | 是否购买 | true购买 false加入购物车 |
 
 返回字段：无
@@ -5462,24 +5462,27 @@ GET
 
 | 请求参数    | 必须 | 参数类型 | 参数说明 | 备注                 |
 | ----------- | ---- | -------- | -------- | -------------------- |
+| num         | 是   | Integer  | 页数     |                      |
+| page        | 是   | Integer  | 页码     |                      |
 | is_complete | 是   | Boolean  | 是否完成 | true完成 false待付款 |
 
 返回字段：
 
-| 返回字段     | 必须 | 字段类型 | 字段说明                   |
-| ------------ | ---- | -------- | -------------------------- |
-| order        | 是   | String   | 订单                       |
-| balance      | 是   | Float    | 余额                       |
-| create_time  | 是   | Integer  | 订单创建时间               |
-| update_time  | 是   | String   | 订单完成时间               |
-| total_amount | 是   | Float    | 总金额                     |
-| works_item   | 是   | Array    | 图片信息                   |
-| uid          | 是   | String   | 唯一标识【属于works_item】 |
-| title        | 是   | String   | 标题【属于works_item】     |
-| spec         | 是   | String   | 规格【属于works_item】     |
-| currency     | 是   | String   | 币种【属于works_item】     |
-| price        | 是   | Float    | 价格【属于works_item】     |
-| thumb_url    | 是   | String   | 缩略图【属于works_item】   |
+| 返回字段     | 必须 | 字段类型 | 字段说明                                 |
+| ------------ | ---- | -------- | ---------------------------------------- |
+| order        | 是   | String   | 订单                                     |
+| balance      | 是   | Float    | 余额                                     |
+| create_time  | 是   | Integer  | 订单创建时间                             |
+| delta_time   | 是   | Integer  | 订单剩余时间/秒                          |
+| total_amount | 是   | Float    | 总金额                                   |
+| works_item   | 是   | Array    | 图片信息                                 |
+| state        | 是   | Integer  | -1取消，0正常，1未付款，2已付款，3已退款 |
+| uid          | 是   | String   | 唯一标识【属于works_item】               |
+| title        | 是   | String   | 标题【属于works_item】                   |
+| spec         | 是   | String   | 规格【属于works_item】                   |
+| currency     | 是   | String   | 币种【属于works_item】                   |
+| price        | 是   | Float    | 价格【属于works_item】                   |
+| thumb_url    | 是   | String   | 缩略图【属于works_item】                 |
 
 返回示例：
 
@@ -5489,7 +5492,8 @@ GET
         	"order": "001",
         	"total_amount": 250.0,
         	"create_time": 1596088929000,
-        	"update_time": 1596088929000,
+        	"delta_time": 1800,
+        	"state": 1,
         	"works_item": [{
                 	"uid": "0001",
                 	"title": "哈哈哈",
@@ -5574,20 +5578,21 @@ GET
 
 返回字段：
 
-| 返回字段     | 必须 | 字段类型 | 字段说明                   |
-| ------------ | ---- | -------- | -------------------------- |
-| order        | 是   | String   | 订单                       |
-| balance      | 是   | Float    | 余额                       |
-| create_time  | 是   | Integer  | 订单创建时间               |
-| update_time  | 是   | String   | 订单完成时间               |
-| total_amount | 是   | Float    | 总金额                     |
-| works_item   | 是   | Array    | 图片信息                   |
-| uid          | 是   | String   | 唯一标识【属于works_item】 |
-| title        | 是   | String   | 标题【属于works_item】     |
-| spec         | 是   | String   | 规格【属于works_item】     |
-| currency     | 是   | String   | 币种【属于works_item】     |
-| price        | 是   | Float    | 价格【属于works_item】     |
-| thumb_url    | 是   | String   | 缩略图【属于works_item】   |
+| 返回字段     | 必须 | 字段类型 | 字段说明                                 |
+| ------------ | ---- | -------- | ---------------------------------------- |
+| order        | 是   | String   | 订单                                     |
+| balance      | 是   | Float    | 余额                                     |
+| create_time  | 是   | Integer  | 订单创建时间                             |
+| delta_time   | 是   | Integer  | 订单剩余时间/ 秒                         |
+| total_amount | 是   | Float    | 总金额                                   |
+| works_item   | 是   | Array    | 图片信息                                 |
+| state        | 是   | Integer  | -1取消，0正常，1未付款，2已付款，3已退款 |
+| uid          | 是   | String   | 唯一标识【属于works_item】               |
+| title        | 是   | String   | 标题【属于works_item】                   |
+| spec         | 是   | String   | 规格【属于works_item】                   |
+| currency     | 是   | String   | 币种【属于works_item】                   |
+| price        | 是   | Float    | 价格【属于works_item】                   |
+| thumb_url    | 是   | String   | 缩略图【属于works_item】                 |
 
 返回示例：
 
@@ -5597,7 +5602,8 @@ GET
         "order": "001",
         "total_amount": 250.0,
         "create_time": 1596088929000,
-        "update_time": 1596088929000,
+        "delta_time": 1800,
+        "state": 1,
         "works_item": [{
                 "uid": "0001",
                 "title": "哈哈哈",
