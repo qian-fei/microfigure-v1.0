@@ -219,7 +219,7 @@ def get_user_order_list(domain=constant.DOMAIN):
 
         # 查询
         pipeline = [
-            {"$match": {"user_id": user_id, "state": 2 if is_complete == "true" else 1}},
+            {"$match": {"user_id": user_id, "state": {"$in": [-1, 2]} if is_complete == "true" else 1}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -231,12 +231,14 @@ def get_user_order_list(domain=constant.DOMAIN):
             {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": 1, "state": "$_id.state"}}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
-        data_list = []
-        for doc in cursor:
-            create_time = doc["create_time"]
-            now_time = int(time.time() * 1000)
-            doc["delta_time"] = (now_time - create_time) // 1000
-            data_list.append(doc)
+        if is_complete == "false":
+            data_list = []
+            for doc in cursor:
+                create_time = doc["create_time"]
+                now_time = int(time.time() * 1000)
+                doc["delta_time"] = (now_time - create_time) // 1000
+                data_list.append(doc)
+        data_list = [doc for doc in cursor]
         return response(data=data_list if data_list else [])
     except Exception as e:
         manage.log.error(e)
