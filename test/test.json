@@ -1,18 +1,20 @@
 {
     "data": {
-        "uid": "0124151",
-        "title": "我是祖国的花朵",
-        "label": ["强大", "繁荣"],
-        "state": 2,
-        "pic_item": [{
-                "uid": "001",
-                "big_pic_url": "http://www.baidu.com/img/1.png",
-                "thumb_url": "http://www.baidu.com/img/1.png",
-                "works_state": 2
-            }
+        "order": "001",
+        "total_amount": 250.0,
+        "create_time": 1596088929000,
+        "update_time": 1596088929000,
+        "works_item": [{
+                "uid": "0001",
+                "title": "哈哈哈",
+                "spec": "S",
+                "currency": "￥",
+                "price": 25.0,
+                "thumb_url": "http://wwww.baidu.com/img/1.png"
+            },
             ...
         ]
-    }，
+    },
     "msg": "Request successful.",
     "code": 0
 }

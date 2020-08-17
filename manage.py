@@ -847,6 +847,13 @@ def user_order_list():
     return app_order_api.get_user_order_list()
 
 
+@app.route(f"{url}/order/detail", methods=["GET"])
+@auth_user_login
+def user_order_detail():
+    """订单详情接口"""
+    return app_order_api.get_order_detail()
+
+
 @app.route(f"{url}/order/state", methods=["PUT"])
 @auth_user_login
 def user_order_state():

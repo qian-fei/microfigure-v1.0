@@ -66,10 +66,43 @@ def post_add_car():
             order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
             condition.update({"order": order, "order_time": int(time.time() * 1000)})
         manage.client["order"].insert(condition)
-        return response()
+        return response(data= order if is_buy else None)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s.", code=1, status=500)
+
+
+def get_order_detail(domain=constant.DOMAIN):
+    """
+    订单详情
+    :param domain: 域名
+    """
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        order = request.args.get("order")
+        if not order:
+            return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
+        pipeline = [
+            {"$match": {"user_id": user_id, "state": 1, "order": order}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$addFields": {"balance": "$user_info.balance"}},
+            {"$unset": ["user_item", "user_info"]},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$group": {"_id": {"order": "$order", "update_time": "$update_time", "create_time": "$create_time"}, "total_amount": {"$sum": "$price", "works_item": {"$push": "$$ROOT"}}}},
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "update_time": "$_id.update_time", "works_item": 1, "total_amount": 1, "balance": 1}}
+        ]
+        cursor = manage.client["order"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        return response(data=data_list[0] if data_list else None)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s.", code=1, status=500)
+
+
 
 
 def get_user_car_list(domain=constant.DOMAIN):

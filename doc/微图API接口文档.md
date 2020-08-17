@@ -5314,7 +5314,7 @@ POST
 
 ```json
 {
-    "data": null,
+    "data": "1245145121412115421", // 当is_busy返回true才有订单号返回
     "msg": "Request successful.",
     "code": 0
 }
@@ -5546,3 +5546,72 @@ PUT
 }
 ```
 
+##### 6.订单详情
+
+请求URL：
+
+```
+/api/v1/order/detail
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+根据请求参数，返回用户订单数据。
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| -------- | ---- | -------- | -------- | ---- |
+| order    | 是   | String   | 订单号   |      |
+
+返回字段：
+
+| 返回字段     | 必须 | 字段类型 | 字段说明                   |
+| ------------ | ---- | -------- | -------------------------- |
+| order        | 是   | String   | 订单                       |
+| balance      | 是   | Float    | 余额                       |
+| create_time  | 是   | Integer  | 订单创建时间               |
+| update_time  | 是   | String   | 订单完成时间               |
+| total_amount | 是   | Float    | 总金额                     |
+| works_item   | 是   | Array    | 图片信息                   |
+| uid          | 是   | String   | 唯一标识【属于works_item】 |
+| title        | 是   | String   | 标题【属于works_item】     |
+| spec         | 是   | String   | 规格【属于works_item】     |
+| currency     | 是   | String   | 币种【属于works_item】     |
+| price        | 是   | Float    | 价格【属于works_item】     |
+| thumb_url    | 是   | String   | 缩略图【属于works_item】   |
+
+返回示例：
+
+```json
+{
+    "data": {
+        "order": "001",
+        "total_amount": 250.0,
+        "create_time": 1596088929000,
+        "update_time": 1596088929000,
+        "works_item": [{
+                "uid": "0001",
+                "title": "哈哈哈",
+                "spec": "S",
+                "currency": "￥",
+                "price": 25.0,
+                "thumb_url": "http://wwww.baidu.com/img/1.png"
+            },
+            ...
+        ]
+    },
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 
