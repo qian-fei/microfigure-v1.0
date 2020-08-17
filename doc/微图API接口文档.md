@@ -3387,7 +3387,7 @@ POST
 }
 ```
 
-##### 28.图片、图集、影集作品列表
+##### 28.图片、图集、影集、图文作品列表
 
 请求URL：
 
@@ -3415,7 +3415,7 @@ GET
 |   num    |  是  | Integer  | 页数                                        |
 | content  |  是  |  String  | 搜索内容，不搜索时默认传default             |
 |  state   |  是  | Integer  | 0未审核，1审核中，2已上架, 3违规下架，4全部 |
-|   type   |  是  |  String  | tp图片，tj图集，yj影集                      |
+|   type   |  是  |  String  | tp图片，tj图集，yj影集, tw图文              |
 
 返回字段：
 
@@ -3426,6 +3426,7 @@ GET
 |    label    |  是  |  Array   | 标签                                       |
 |  cover_url  |  是  |  String  | 封面路径                                   |
 | big_pic_url |  是  |  String  | 大图路径                                   |
+|    desc     |  否  |  String  | 图文描述                                   |
 |   pic_id    |  是  |  Array   | 图片id                                     |
 |    state    |  是  | Integer  | 状态。0未审核，1审核中，2已上架，3违规下架 |
 | create_time |  是  | Integer  | 时间戳                                     |
@@ -3441,6 +3442,7 @@ GET
         "pic_id": ["111", "222"],
         "cover_url": "http://www.baidu.com/img/1.png",
         "big_pic_url": "http://www.baidu.com/img/1.png",
+        "desc": "哈哈哈啊",
         "state": 2,
         "create_time": 1594848185000
     	},

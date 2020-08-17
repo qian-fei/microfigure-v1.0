@@ -1059,7 +1059,7 @@ def get_pic_wokrs_list(domain=constant.DOMAIN, length_max=32):
         num = request.args.get("num")
         content = request.args.get("content")
         state = request.args.get("state") # 0未审核，1审核中，2已上架, 3违规下架，4全部
-        type = request.args.get("type") # tp图片，tj图集, yj影集, "tw"
+        type = request.args.get("type") # tp图片，tj图集, yj影集, tw图文
         if not page:
             return response(msg="Bad Request: Miss param 'page'.", code=1, status=400)
         if not num:
@@ -1085,7 +1085,7 @@ def get_pic_wokrs_list(domain=constant.DOMAIN, length_max=32):
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}}}}}},
             {"$addFields": {"temp_item": {"$arrayElemAt": ["$pic_item", 0]}}},
             {"$addFields": {"big_pic_url": "$temp_item.big_pic_url"}},
-            {"$project": {"_id": 0, "uid": 1, "pic_id":1, "title": 1, "big_pic_url": 1, "label": 1, "state": 1, "create_time": 1, "pic_item": 1, "cover_url": {"$concat": [domain, "$cover_url"]}}},
+            {"$project": {"_id": 0, "uid": 1, "pic_id":1, "title": 1, "desc": 1,"big_pic_url": 1, "label": 1, "state": 1, "create_time": 1, "pic_item": 1, "cover_url": {"$concat": [domain, "$cover_url"]}}},
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
