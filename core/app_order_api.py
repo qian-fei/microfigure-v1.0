@@ -128,6 +128,24 @@ def get_user_car_list(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s.", code=1, status=500)
 
 
+def delete_user_car_goods():
+    """删除购物车商品"""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        # 商品id
+        uid_list = request.json.get("uid_list") # array
+        if not uid_list:
+            return response(msg="Bad Request: Miss param 'uid_list'.", code=1, status=400)
+        manage.client["order"].update({"uid": {"$in": uid_list}}, {"$set": {"state": -1}}, multi=True)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s.", code=1, status=500)
+
+
 def post_car_generate_order(domain=constant.DOMAIN):
     """
     购物车合并订单

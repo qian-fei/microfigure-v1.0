@@ -826,6 +826,13 @@ def user_car_add():
     return app_order_api.post_add_car()
 
 
+@app.route(f"{url}/car/delete", methods=["DELETE"])
+@auth_user_login
+def user_car_delete():
+    """加入购物车接口"""
+    return app_order_api.delete_user_car_goods()
+
+
 @app.route(f"{url}/car/list", methods=["GET"])
 @auth_user_login
 def user_car_list():
