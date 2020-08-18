@@ -185,7 +185,7 @@ def post_register(nick_limit=8):
         # 条件
         condition = {
             "uid": str(uid), "nick": "微图", "sex": "保密", "age": 20, "mobile": str(mobile), "password": password_b64, "head_img_url": "", "state": 1, "account": str(mobile), "auth": 0,
-            "type": "user", "balance": 0.0, "works_num":0, "group": "comm", "label": [], "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "login_time": int(time.time() * 1000),
+            "type": "user", "balance": float(0), "works_num":0, "group": "comm", "label": [], "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "login_time": int(time.time() * 1000),
             "sign": "欢迎来使用趣图，快来更新您的签名吧！", "author": 0
         }
         # 正常注册

@@ -225,8 +225,11 @@ def get_user_follow_works():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_userinfo():
-    """用户基本信息"""
+def get_userinfo(domain=constant.DOMAIN):
+    """
+    用户基本信息
+    :param domain: 域名
+    """
 
     try:
         # 用户id
@@ -234,6 +237,17 @@ def get_userinfo():
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         user_info = g.user_data["user_info"]
+        author_id = request.args.get("author_id")
+        if author_id:
+            pipeline = [
+                        {"$match": {"uid": author_id}},
+                        {"$project": {"_id": 0, "uid": 1, "nick": 1, "sex": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "sign": 1, "mobile": 1, 
+                                    "background_url": {"$concat": [domain, "$background_url"]}, "works_num": 1, "label": 1, "login_time": 1, "group": 1, 
+                                    "create_time": 1, "update_time": 1, "auth": 1}}
+            ]
+            cursor = client["user"].aggregate(pipeline)
+            data_list = [doc for doc in cursor]
+            user_info = data_list[0]
         # 计算注册时长
         register_time = user_info["create_time"]
         login_time = user_info["login_time"]
@@ -493,7 +507,6 @@ def post_withdrawal_apply():
 
 def get_user_home_page():
     """用户主页"""
-    data = {}
     try:
         num = request.args.get("num", None)
         page = request.args.get("page", None)
@@ -508,14 +521,12 @@ def get_user_home_page():
             return response(msg="Bad Request: Miss params 'user_id'.", code=1, status=400)
         # 查询数据
         # 用户信息
-        doc = manage.client["user"].find_one({"uid": user_id, "stat": 1}, {"_id": 0, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "sign": 1})
-        if not doc:
-            return response(msg="Bad Request: The user does not exist.", code=1, status=400)
-        data["user_info"] = doc
+        # doc = manage.client["user"].find_one({"uid": user_id, "stat": 1}, {"_id": 0, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "sign": 1})
+        # if not doc:
+        #     return response(msg="Bad Request: The user does not exist.", code=1, status=400)
         # 用户作品
         data_list = user_works_api(user_id, page, num)
-        data["works_list"] = works_list
-        return response(data=data)
+        return response(data=works_list)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

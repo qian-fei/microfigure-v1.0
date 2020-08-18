@@ -484,7 +484,7 @@ def get_works_audit_list(search_max=32, domain=constant.DOMAIN):
             return response(msg="Bad Request: Params 'category' is error.", code=1, status=400)
         if content and len(content) > search_max:
             return response(msg=f"搜索内容最长{search_max}个字符，请重新输入", code=1)
-        if type not in ["tp", "tj", "tw", "default"]:
+        if type not in ["tp", "tj", "tw", "default", "yj"]:
             return response(msg="Bad Request: Params 'type' is error.", code=1, status=400)
         # 查询
         pipeline = [

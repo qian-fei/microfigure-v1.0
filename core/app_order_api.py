@@ -91,7 +91,7 @@ def get_order_detail(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "balance": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
             {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
             {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "state": "$_id.state", "balance": "$_id.balance"}}
         ]
@@ -100,7 +100,7 @@ def get_order_detail(domain=constant.DOMAIN):
         for doc in cursor:
             create_time = doc["create_time"]
             now_time = int(time.time() * 1000)
-            doc["delta_time"] = (now_time - create_time) // 1000
+            doc["delta_time"] = (create_time + 1800000 - now_time) // 1000
             data_list.append(doc)
         return response(data=data_list[0] if data_list else None)
     except Exception as e:
@@ -226,9 +226,9 @@ def get_user_order_list(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
-            {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
-            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": 1, "state": "$_id.state"}}
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": "$_id.balance", "state": "$_id.state"}}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
         if is_complete == "false":
@@ -236,9 +236,10 @@ def get_user_order_list(domain=constant.DOMAIN):
             for doc in cursor:
                 create_time = doc["create_time"]
                 now_time = int(time.time() * 1000)
-                doc["delta_time"] = (now_time - create_time) // 1000
+                doc["delta_time"] = (create_time + 1800000 - now_time) // 1000
                 data_list.append(doc)
-        data_list = [doc for doc in cursor]
+        else:
+            data_list = [doc for doc in cursor]
         return response(data=data_list if data_list else [])
     except Exception as e:
         manage.log.error(e)
@@ -274,16 +275,15 @@ def post_order_payment():
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         order = request.json.get("order")
-        channel = request.json.get("channel") # 余额 支付宝 微信
-        total_amount = request.json.get("total_amount")
+        pay_method = request.json.get("channel") # 余额 支付宝 微信
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
         if pay_method not in ["微信", "支付宝", "余额"]:
             return response(msg="Bad Request: Params 'pay_method' is error.", code=1, status=400)
-        if not total_amount:
-            return response(msg="Bad Request: Miss params: 'total_amount'.", code=1, status=400)
-        if total_amount < 0 or type(total_amount) != float:
-            return response(msg="Bad Request: Parmas 'total_amount' is error.", code=1, status=400)
+        total_amount = 0
+        cursor = manage.client["order"].find({"order": order})
+        for doc in cursor:
+            total_amount += doc["price"]
         # 余额支付
         if pay_method == "余额":
             doc = manage.client["user"].find_one({ "uid": user_id})
@@ -309,8 +309,8 @@ def post_order_payment():
                 return response()
         # 支付宝支付
         if pay_method == "支付宝":
-            alipay = AliPay(order, total_amount)
-            request_param = alipay.generate_request_param()
+            alipay = AliPay(order, str(total_amount))
+            request_param = alipay.generate_request_param(order, str(total_amount))
         # 微信支付
         if pay_method == "微信":
             wechatpay = WechatPay(order, total_amount * 100)

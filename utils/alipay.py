@@ -1,72 +1,44 @@
 import rsa
 import base64
 import urllib
+import datetime
 import requests
 
 class AliPay(object):
     """移动端支付宝支付"""
     # 应用ID
-    APP_ID = "2016102100730287"
+    APP_ID = "2021000120602549"
     # 接口名称
     METHOD = "alipay.trade.app.pay"
     # 编码
     CHARSET = "utf-8"
     # 加密类型
-    SIGN_TYPE = "RSA"
+    SIGN_TYPE = "RSA2"
     # 版本
     VERSION = "1.0"
     # 支付宝请求地址
-    SERVER_URL = "https://openapi.alipay.com/gateway.do"
+    # SERVER_URL = "https://openapi.alipay.com/gateway.do"
+    SERVER_URL = "https://openapi.alipaydev.com/gateway.do"
     # 支付宝回调地址
-    NOTIFY_URL = ""
+    NOTIFY_URL = "http://wt.test.frp.jethro.fun:8080/api/v1/alipay/callback" # http://wt.test.frp.jethro.fun:8080/api/v1/alipay/callback
     # 支付宝公钥
     ALIPAY_PUBLIC = """-----BEGIN PUBLIC KEY-----
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA111wd3/TikY9hXtvmDsW
-    2IPuIq8Y/kl5iidEuHhxVq8w/vEOyodaKfq9CJ0GaII8IlVV75bMKSL3Z7mgQaFU
-    W3CYoYg+qXxY98AqrAlWrNfb86EMkg+40K8rXH5TMtNDuQMiZq2HN+1hOUDRN94f
-    w2CsY/Z6NqWnwEZTFGdyFlOU+hJ9IHtgpB0XPM+3A/MeuakcMQYifozA4iBRzwR5
-    PcmuOV6Ar1fk9Q7AwyKXZi5icy1uGEiyjZVzy6L6IoyC9sXiw00e0r5TDRqdUxXC
-    2cpR6T+RUqVY84gFpg4Y2+pMs3OpQgSRZzgrAA+QTLtZa3HLMKXd3x7Mf9e8/1w2
-    CQIDAQAB
+    MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDIgHnOn7LLILlKETd6BFRJ0GqgS2Y3mn1wMQmyh9zEyWlz5p1zrahRahbXAfCfSqshSNfqOmAQzSHRVjCqjsAw1jyqrXaPdKBmr90DIpIxmIyKXv4GGAkPyJ/6FTFY99uhpiq0qadD/uSzQsefWo0aTvP/65zi3eof7TcZ32oWpwIDAQAB
     -----END PUBLIC KEY-----"""
-    # 商户RSA2私钥
+    # 商户RSA2私钥jj
+    # PRIVATE_KEY = """-----BEGIN RSA PRIVATE KEY-----
+    # MIICWwIBAAKBgQCjZlzbNXC1DAFMTyoQ6yt76uI5UE6BFXfvnY0A59zJidN8oAPwcu60iTntQ/4V3vpBd6jnl8jbQM/6VS380ywBpmnzA9NyDtb64Pz9RLVNkGJKo9MkxUbvndQiwCoqt5UphA9MfmLtwwucJvy82dziKLHIjUh+B8v6LFGhg5fVPwIDAQABAoGAFskoe70ZCXYyHCUR9agFuVMI1vs251NKFVUAG7c5l7Urk75wrjAoz24vcMHBheVBOq3oFNuau9Bu8Da+ofoEscDyrIipHCf1LbTKi2APvaluooPdhqlNzDSIbXCJIdGkuCnUttLOR5y3CvDsQxLaErOa3gaB8vws/YrDKO7pKWECQQDfWtCggXmzJSIS3LN0SNn8XNNjtzpZHfK6AWVpPzJbJ1+Fbpk1+uuc1VLTOgfT3d5rxZ/snqKjKTyj1uJGTbYvAkEAu0g8p1fGEzgBQU2/Mdhx3VkVI5eEYVWuMgrgRXNSXortPwCYLkvfcVlzbg7X5Rst0hyLo4ynpts4WAcCvvQd8QJAOG1sGbC8O0sdUaCaYb1p/PzClwWaYxtS0DU8FpvVr/vBgSdQ47dRwRyPwTd+9MKvx5B098WYFxp67HWEUvidFwJAExeNH14iUik+b4LWf+VZzj/bmNJEa4vJg056iHn2Jq8w+mA8I1QWxj5hNxIKTk/T/vxr+9NF8AufFdI5JHBMcQJAX0aNCQX8UgsSQtnUA/4/1xA/MZS4WZAwv2EPHGORJrHmjNBA2xCRuMaiJtHQg2B1qy9/Kz1A5wwgDKulfEhMfQ==
+    # -----END RSA PRIVATE KEY-----"""
     PRIVATE_KEY = """-----BEGIN RSA PRIVATE KEY-----
-    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
+    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
     -----END RSA PRIVATE KEY-----"""
     # 商户RSA2公钥
-    PUBLICE_KEY = """-----BEGIN RSA PUBLIC KEY-----
-    MIIBCgKCAQEA3FqomGVlH/sRheBi5Bopa1V4rvcKWg7BZBbulWxOVwj7KLOmKlMj
-    xj3dSHyxYqUVx/50sK1ptbo3dVp2VoV1quP7t8r8RQN5LDMkKD7eevUtkn6tD4+Z
-    1oIQLx93LCHCCBc+n0SkDkWrqKRIJJG1kGAeHoiEywW2wL23rQAMjEmsMROgR7JI
-    qo371NyvupqMnP/Pq0+DIA7LQE4gSLDlr+2GB4W4Eyleke+BkpUzs7Qq7iqz+/m5
-    U6zBsdA1JcQnrz1pnxlTCapvvVUVwt//esIpKzwNTr89qfc7WTxxfwrfC4KApURz
-    RS0oRrm7sajRdh3nW52igjMQeGJf6Ve6hQIDAQAB
-    -----END RSA PUBLIC KEY-----"""
-
+    # PUBLICE_KEY = """-----BEGIN RSA PUBLIC KEY-----
+    # MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCjZlzbNXC1DAFMTyoQ6yt76uI5UE6BFXfvnY0A59zJidN8oAPwcu60iTntQ/4V3vpBd6jnl8jbQM/6VS380ywBpmnzA9NyDtb64Pz9RLVNkGJKo9MkxUbvndQiwCoqt5UphA9MfmLtwwucJvy82dziKLHIjUh+B8v6LFGhg5fVPwIDAQAB
+    # -----END RSA PUBLIC KEY-----"""
+    PUBLICE_KEY = """-----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt8QcIn+hbP0+XMJje8nsT3q6qXmsforaBC7G+1WEZ9mlucffzQ6QleXWhWZD6Awy2Wtr7bUsR0rOcEraSJNx2BQ4g9na6TgF6XsjP8zhJDe88pu8eO93sIqbauc+W4Q9EN1Z64g0lA/CJnCpfso2c4YR/AJqWm2Jj1JQ09gEHN6cVA8R1gPgiK53qo/LN9Dy69vLapghKmlrDhCC6xtrDzd8QbHuZBhRFeTMxanScFcyiMRxje/MqD61KzC2Xo52a2pi/64KRhLMiZNtTkeKCzZVBhND6fC9U5esB3fb1QiEJMRh+vjrpoFvGalAmFqP/ObsWIVbF999ym+izxbaWwIDAQAB
+    -----END PUBLIC KEY-----"""
     def __init__(self, out_trade_no, total_amount):
         """
         初始化配置
@@ -81,7 +53,7 @@ class AliPay(object):
             "product_code": "QUICK_MSECURITY_PAY" # 产品码 默认QUICK_MSECURITY_PAY
         }
         self.public_param = {
-            "appid": self.APP_ID, # 应用ID
+            "app_id": self.APP_ID, # 应用ID
             "method": self.METHOD, # 接口名称
             "format": "JSON", # 参数格式
             "charset": self.CHARSET, # 编码
@@ -104,8 +76,8 @@ class AliPay(object):
         # PRIVATE_KEY = private_key.save_pkcs1()
         # PUBLICE_KEY = public_key.save_pkcs1()
         private_key = rsa.PrivateKey._load_pkcs1_pem(self.PRIVATE_KEY)
-        message = message.encode("utf-8")
-        sign = rsa.sign(message, private_key, "SHA-1")
+        content = content.encode("utf-8")
+        sign = rsa.sign(content, private_key, "SHA-256")
         b64_sign = base64.b64encode(sign)
         return b64_sign
     
@@ -133,7 +105,7 @@ class AliPay(object):
         self.public_param["timestamp"] = timestamp
         self.public_param["biz_content"] = f"{self.order_info}"
         self.public_param.pop("sign")
-        self.public_param["sign"] = self.genreate_sign(self.order_info)
+        self.public_param["sign"] = self.genreate_sign(AliPay.generate_str(self.order_info))
         request_param = AliPay.generate_str(self.public_param)
         return request_param
     

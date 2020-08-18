@@ -18,6 +18,7 @@ import time
 import random
 import datetime
 import manage
+import jieba
 from bson.son import SON
 from flask import request, g
 from utils.util import response
@@ -601,11 +602,15 @@ def get_pic_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
                             "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
-                            "nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item"]},
+                            "nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", 
+                            "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}},
+                            "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}},
+                            }},
+            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         
@@ -864,23 +869,23 @@ def post_works_like():
     try:
         # 用户uid
         user_id = g.user_data["user_id"]
-        visitor_id = request.headers.get("user_id", None)
-        user_id = user_id if user_id else visitor_id
+        # visitor_id = request.headers.get("user_id", None)
+        # user_id = user_id if user_id else visitor_id
         if not user_id:
-            return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
+            return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=401)
         # 作品uid
-        wokrs_id = request.json.get("wokrs_id", None)
-        if not wokrs_id:
-            return response(msg="Bad Request: Miss params: 'wokrs_id'.", code=1, status=400)
+        works_id = request.json.get("works_id", None)
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         # 点赞量+1
-        doc = manage.client["works"].update({"uid": wokrs_id}, {"$inc": {"like_num": 1}})
+        doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"like_num": 1}})
         if doc["n"] == 0:
-            return response(msg="Bad Request: Params 'wokrs_id' is error.", code=1, status=400)
+            return response(msg="Bad Request: Params 'works_id' is error.", code=1, status=400)
         # 点赞统计
         # 凌晨时间戳
         today = datetime.date.today()
         today_stamp = int(time.mktime(today.timetuple()) * 1000)
-        doc = manage.client["works"].find_one({"works_id": works_id})
+        doc = manage.client["works"].find_one({"uid": works_id})
         author_id = doc.get("user_id")
         doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
         if doc:
@@ -888,9 +893,9 @@ def post_works_like():
         else:
             manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "like_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         # 记录点赞记录
-        doc = manage.client["like_records"].find_one({"user_id": user_id, "wokrs_id":  wokrs_id, "type": "zp"})
+        doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "type": "zp"})
         if doc:
-            manage.client["like_records"].update({"user_id": user_id, "wokrs_id": wokrs_id, "type": "zp"}, {"$set": {"state": 0, "update_time": int(time.time() * 1000)}})
+            manage.client["like_records"].update({"user_id": user_id, "works_id": works_id, "type": "zp"}, {"$set": {"state": 0, "update_time": int(time.time() * 1000)}})
         else:
             condition = {"user_id": user_id, "works_id": works_id, "type": "zp", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["like_records"].insert(condition)
@@ -911,7 +916,7 @@ def get_comment_list(domain=constant.DOMAIN):
         # 参数
         num = request.args.get("num", None)
         page = request.args.get("page", None)
-        wokrs_uid = request.args.get("wokrs_uid", None)
+        works_id = request.args.get("works_id", None)
         # 校验
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
@@ -919,19 +924,19 @@ def get_comment_list(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
         if int(page) < 1 or int(num) < 1:
             return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
-        if not wokrs_uid:
-            return response(msg="Bad Request: Miss params: 'wokrs_uid'.", code=1, status=400)
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         # 查询数据
         pipeline = [
-            {"$match": {"works_id": wokrs_uid, "state": 1}},
+            {"$match": {"works_id": works_id, "state": 1}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$lookup": {"from": "like_records", "let": {"category_id": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$category_id", "$$category_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$works_id"]}}}], "as": "like_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}, 
                             "nick": "$user_info.nick", "like_num": {"$size": "$like_item"}}},
-            {"$unset": ["user_item", "user_info"]},
+            {"$unset": ["user_item", "user_info", "like_item", "like_info"]},
             {"$sort": SON([("create_time", -1)])},
             {"$project": {"_id": 0}}
         ]
@@ -959,7 +964,7 @@ def  post_comment_records():
             return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         # 评论入库
         keyword = list(jieba.cut(content))
-        doc = manage.client["bad"].find({"keyword": {"$in": keyword}})
+        cursor = manage.client["bad"].find({"keyword": {"$in": keyword}})
         data_list = [doc for doc in cursor]
         if data_list: 
             return response(msg="您输入的内容包含铭感词汇, 请重新输入", code=1)
@@ -974,7 +979,7 @@ def  post_comment_records():
         # 凌晨时间戳
         today = datetime.date.today()
         today_stamp = int(time.mktime(today.timetuple())*1000)
-        doc = manage.client["works"].find_one({"works_id": works_id})
+        doc = manage.client["works"].find_one({"uid": works_id})
         author_id = doc.get("user_id")
         doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
         if doc:
@@ -1007,10 +1012,10 @@ def post_comment_like():
         # 写入点赞记录表
         doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "comment_id": comment_id, "type": "pl"})
         if doc:
-            condition = {"user_id": author_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "update_time": int(time.time() * 1000)}
+            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "update_time": int(time.time() * 1000)}
             manage.client["like_records"].update(condition, {"$set": {"state": 0}})
         else:
-            condition = {"user_id": author_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["like_records"].insert(condition)
         return response()
     except Exception as e:
@@ -1185,7 +1190,7 @@ def post_blacklist():
             return response(msg="Bad Request: Miss params: 'black_id'.", code=1, status=400)
         if not type:
             return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
-        doc = manage.client["blacklist"].find_one({"user_id": user_id, "black_id": black_id}, {"$set": {"state": 1, "update_time": int(time.time() * 1000)}})
+        doc = manage.client["blacklist"].update({"user_id": user_id, "black_id": black_id}, {"$set": {"state": 1, "update_time": int(time.time() * 1000)}})
         if doc["n"] == 0:
             manage.client["black"].insert({"user_id": user_id, "black_id": black_id, "state": 1, "update_time": int(time.time()), "create_time": int(time.time() * 1000)})
         return response()

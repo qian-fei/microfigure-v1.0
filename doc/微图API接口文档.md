@@ -386,6 +386,7 @@ GET
 | create_time  |  是  | Integer  | 创建时间     | 毫秒时间戳                               |
 | update_time  |  是  | Integer  | 更新时间     | 毫秒时间戳                               |
 |  is_follow   |  是  | Boolean  | 是否关注     | true已关注，false未关注                  |
+|   is_like    |  是  | Boolean  | 是否点赞     | true已关注，false未关注                  |
 
 返回示例
 
@@ -421,6 +422,7 @@ GET
             "is_portrait": true,
             "is_products": true,
             "is_follow": true,
+           	"is_like": true,
             "type": "tj",
             "pic_num": 1,
             "like_num": 666,
@@ -1308,6 +1310,8 @@ GET
 |     nick     |  是  |  String  | 昵称     |
 |   like_num   |  是  | Integer  | 点赞量   |
 |   content    |  是  |  String  | 内容     |
+| create_time  |  是  | Integer  | 创建时间 |
+|   is_like    |  是  | Boolean  | 是否点赞 |
 
 返回示例：
 
@@ -1320,7 +1324,9 @@ GET
         "head_img_url": "www.baidu.com/img/1.jpg",
         "nick": "我是祖国的花朵",
         "like_num": 666,
-        "content": "我是祖国的花朵"
+        "content": "我是祖国的花朵",
+        "create_time": 12545248814,
+        "is_like": true
     	},
         ...
     ],
@@ -1392,6 +1398,7 @@ POST
 
 |  请求参数  | 必须 | 参数类型 | 参数说明 |
 | :--------: | :--: | :------: | :------- |
+|  works_id  |  是  |  String  | 作品id   |
 | comment_id |  是  |  String  | 评论uid  |
 
 返回字段：无
@@ -5658,4 +5665,82 @@ DELETE
 }
 ```
 
-##### 
+##### 8.订单支付
+
+请求URL：
+
+```
+/api/v1/order/payment
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+订单支付
+```
+
+请求参数：
+
+| 请求参数     | 必须 | 参数类型 | 参数说明 | 备注             |
+| ------------ | ---- | -------- | -------- | ---------------- |
+| order        | 是   | String   | 订单id   |                  |
+| channel      | 是   | String   | 渠道     | 余额 支付宝 微信 |
+| total_amount | 是   | Float    | 订单总额 |                  |
+
+返回字段：
+
+返回示例：
+
+```json
+{
+    "data": 'app_id=2015052600090779&biz_content={"timeout_express":"30m","product_code":"QUICK_MSECURITY_PAY","total_amount":"0.01","subject":"1","body":"我是测试数据","out_trade_no":"IQJZSRC1YMQB5HU"}&charset=utf-8&format=json&method=alipay.trade.app.pay&notify_url=http://domain.merchant.com/payment_notify&sign_type=RSA2&timestamp=2016-08-25 20:26:31&version=1.0&sign=cYmuUnKi5QdBsoZEAbMXVMmRWjsuUj+y48A2DvWAVVBuYkiBj13CFDHu2vZQvmOfkjE0YqCUQE04kqm9Xg3tIX8tPeIGIFtsIyp/M45w1ZsDOiduBbduGfRo1XRsvAyVAv2hCrBLLrDI5Vi7uZZ77Lo5J0PpUUWwyQGt0M4cj8g=', // 支付宝 微信为响应的xml字符串
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 9.支付成功后app回调
+
+请求URL：
+
+```
+/api/v1/app/callback
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+支付成功后回调
+```
+
+请求参数：
+
+| 请求参数     | 必须 | 参数类型 | 参数说明 | 备注 |
+| ------------ | ---- | -------- | -------- | ---- |
+| order        | 是   | String   | 订单id   |      |
+| total_amount | 是   | Float    | 订单总额 |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+

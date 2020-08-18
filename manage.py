@@ -418,6 +418,7 @@ def works_like():
 
 
 @app.route(f"{url}/comment/list", methods=["GET"])
+@auth_user_login
 def comment_list():
     """评论列表页接口"""
     return app_list_api.get_comment_list()
@@ -1620,11 +1621,12 @@ def admin_finance_withdrawal_audit_export():
 
 @app.route(f"{url}/test", methods=["POST"])
 def test():
-    data = request.args
-    import xmltodict
-    xml = xmltodict.unparse({"xml": data}, pretty=True, full_document=False).encode("utf-8")
+    # data = request.args
+    # import xmltodict
+    # xml = xmltodict.unparse({"xml": data}, pretty=True, full_document=False).encode("utf-8")
     # return jsonify({"return_code": "SUCCESS", "return_msg": "OK"})
-    return Response(xml)
+    # return Response(xml)
+    return app_order_api.post_order_payment()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
