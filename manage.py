@@ -876,14 +876,14 @@ def order_payment():
     return app_order_api.post_order_payment()
 
 
-@app.route(f"{url}/alipay/callback", methods=["POST"])
+@app.route(f"{url}/alipay/callback", methods=["GET", "POST"])
 @auth_user_login
 def alipay_callback_verify():
     """支付宝回调验证接口"""
     return app_order_api.post_alipay_callback_verify()
 
 
-@app.route(f"{url}/wechat/callback", methods=["POST"])
+@app.route(f"{url}/wechat/callback", methods=["GET", "POST"])
 @auth_user_login
 def wechat_callback_verify():
     """微信支付回调验证接口"""
@@ -1619,14 +1619,15 @@ def admin_finance_withdrawal_audit_export():
     return admin_finance_api.get_withdrawal_records_audit_export()
 
 
-@app.route(f"{url}/test", methods=["POST"])
+@app.route(f"{url}/test", methods=["GET", "POST"])
 def test():
-    # data = request.args
+    data = request.args
     # import xmltodict
     # xml = xmltodict.unparse({"xml": data}, pretty=True, full_document=False).encode("utf-8")
     # return jsonify({"return_code": "SUCCESS", "return_msg": "OK"})
     # return Response(xml)
-    return app_order_api.post_order_payment()
+    # rest = request.form.to_dict()
+    return data
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

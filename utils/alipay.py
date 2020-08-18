@@ -29,9 +29,9 @@ class AliPay(object):
     # PRIVATE_KEY = """-----BEGIN RSA PRIVATE KEY-----
     # MIICWwIBAAKBgQCjZlzbNXC1DAFMTyoQ6yt76uI5UE6BFXfvnY0A59zJidN8oAPwcu60iTntQ/4V3vpBd6jnl8jbQM/6VS380ywBpmnzA9NyDtb64Pz9RLVNkGJKo9MkxUbvndQiwCoqt5UphA9MfmLtwwucJvy82dziKLHIjUh+B8v6LFGhg5fVPwIDAQABAoGAFskoe70ZCXYyHCUR9agFuVMI1vs251NKFVUAG7c5l7Urk75wrjAoz24vcMHBheVBOq3oFNuau9Bu8Da+ofoEscDyrIipHCf1LbTKi2APvaluooPdhqlNzDSIbXCJIdGkuCnUttLOR5y3CvDsQxLaErOa3gaB8vws/YrDKO7pKWECQQDfWtCggXmzJSIS3LN0SNn8XNNjtzpZHfK6AWVpPzJbJ1+Fbpk1+uuc1VLTOgfT3d5rxZ/snqKjKTyj1uJGTbYvAkEAu0g8p1fGEzgBQU2/Mdhx3VkVI5eEYVWuMgrgRXNSXortPwCYLkvfcVlzbg7X5Rst0hyLo4ynpts4WAcCvvQd8QJAOG1sGbC8O0sdUaCaYb1p/PzClwWaYxtS0DU8FpvVr/vBgSdQ47dRwRyPwTd+9MKvx5B098WYFxp67HWEUvidFwJAExeNH14iUik+b4LWf+VZzj/bmNJEa4vJg056iHn2Jq8w+mA8I1QWxj5hNxIKTk/T/vxr+9NF8AufFdI5JHBMcQJAX0aNCQX8UgsSQtnUA/4/1xA/MZS4WZAwv2EPHGORJrHmjNBA2xCRuMaiJtHQg2B1qy9/Kz1A5wwgDKulfEhMfQ==
     # -----END RSA PRIVATE KEY-----"""
-    PRIVATE_KEY = """-----BEGIN RSA PRIVATE KEY-----
+    PRIVATE_KEY = """-----BEGIN PRIVATE KEY-----
     MIIEowIBAAKCAQEAt8QcIn+hbP0+XMJje8nsT3q6qXmsforaBC7G+1WEZ9mlucffzQ6QleXWhWZD6Awy2Wtr7bUsR0rOcEraSJNx2BQ4g9na6TgF6XsjP8zhJDe88pu8eO93sIqbauc+W4Q9EN1Z64g0lA/CJnCpfso2c4YR/AJqWm2Jj1JQ09gEHN6cVA8R1gPgiK53qo/LN9Dy69vLapghKmlrDhCC6xtrDzd8QbHuZBhRFeTMxanScFcyiMRxje/MqD61KzC2Xo52a2pi/64KRhLMiZNtTkeKCzZVBhND6fC9U5esB3fb1QiEJMRh+vjrpoFvGalAmFqP/ObsWIVbF999ym+izxbaWwIDAQABAoIBAB+e6ixxg8hqRynU9SNe2n/OoYH6Atl/cQZZOjoTPAZWqDKwlu0E/ZIdi21G7JZoSvOojVjI3Qajc6RU7PyiCmvhBtyBRy7sSfAkFSusSG1f/e5NKAAzTIgfQaECi3NZ7NwTCp8Bv/JeR80vg6rihr4YKs4PaFeJE6uKwYfCWurQhIzCJbJvZUZJzz6oPofMSOCXPp90qsGVwNXrJEr3vzvejFUrfZ/7twLvICtfijs9UGjkZBALMHUYTyqV6ZuHzwRpT88NyTPQgM7bVcxw4vS4Jt9heNmmCvgjzXe9u7gY3lyUxIGp+cdk3VB7UjEr/CoVLDambBuyfKPzK2XJ58kCgYEA58usQTtsl0j5aUk7n6D1VePCu9kwA1Kth/R1kbllS4MddOD8TFj6kmaYnudrGkV3rW1KMQR8V/ub0+ZR3Cv1teOsZxeu0U6vJkVUF7lrzdJnDVDFfmxyZ/M4ctW6fGV7S4rjApeqrdzJjvlCc4eGN3tGW99As6cfvOXl1nEtpt0CgYEAyvSEoQ36eUTQJi7aa49ZFvBwy60G/x9YIQk3MFiY8qFsRS0unJWbk7g3SrW67QsUSQNOMLojms5DB7RO7FNj6gumjS9Pa2rO5d3oX9MicKizaZa9hgm4byklOygtkuFWumVHb0TUcKcVozYz73JZaWrIQwWL33D2aPYom2ydRpcCgYAOErybnUsDiGe0L8ER+QjMNS7ejtouaXeluH7m4RW4VvaT4REQZZqZBuefRjenea5BdlA516bhBKK6Y9J2hqi9aVxPSg3QIXHa5fysEBLuhSbClTPYcCcmDotP1ZAj+1lYBc+wmZrAQZZvOs0BDKpmdfKYo15fSfdQVbj1oxt9dQKBgEe02sNYf/2mrXBAL5W/IPf03bVoncc32NhbPC+NrgRTukA6tXRHe59Wf9qamL+1oWYmj9KxgXDpnU80ion+8Jc5pI/PflzycMVQgRCSNWHeiP0ucCnSd2J3BBuBl5CEozLaI8IRbImczw1KUlEwcpzHSJg9dmzsqXLuPeykFHFjAoGBANlXXe3+Y29uEQg+2vPXuO0Hj4NSN28yRpbX0uFMPVME6MIdKK9yDnshchLKTfUQ/l96dhlPWV5fl+iQcEJ2WMkM2w4fkP1ZqcPrYtYFpfAOGJ5xXUy5nVMZWWCkKGx4CA1WghIW7dplCvCc7Z0VgErl6T19OpjzcAL2g3XF+DC/
-    -----END RSA PRIVATE KEY-----"""
+    -----END PRIVATE KEY-----"""
     # 商户RSA2公钥
     # PUBLICE_KEY = """-----BEGIN RSA PUBLIC KEY-----
     # MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCjZlzbNXC1DAFMTyoQ6yt76uI5UE6BFXfvnY0A59zJidN8oAPwcu60iTntQ/4V3vpBd6jnl8jbQM/6VS380ywBpmnzA9NyDtb64Pz9RLVNkGJKo9MkxUbvndQiwCoqt5UphA9MfmLtwwucJvy82dziKLHIjUh+B8v6LFGhg5fVPwIDAQAB
@@ -123,7 +123,7 @@ class AliPay(object):
         sign = param_dict["sign"]
         call_sign = base64.b64decode(sign)
         # 除sign、sign_type参数外，其余参数皆是待验签参数
-        param_dict.pop("sign_type")
+        # param_dict.pop("sign_type")
         param_dict.pop("sign")
         param_str = AliPay.generate_str(param_dict)
         content = param_str.encode("utf-8")
