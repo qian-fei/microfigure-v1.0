@@ -53,8 +53,8 @@ def follow_list_api(user_id, search_kw, page, num, domain=constant.DOMAIN):
             {"$unset": ["user_item", "user_info"]},
             {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "works_num": 1}}
         ]
-        if search_kw:
-            pipeline.insert(4, {"$match": {"nick": {"$regex": search_kw}}})
+        if search_kw != "default":
+            pipeline.insert(6, {"$match": {"nick": {"$regex": search_kw}}})
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         return data_list
@@ -73,7 +73,7 @@ def fans_list_api(user_id, domain=constant.DOMAIN):
         # 查询数据
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
-            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "user", "let": {"fans_id": "$fans_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$fans_id"]}}}], "as": "user_item"}},
             # {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"head_img_url": "$user_info.head_img_url", "nick": "$user_info.nick"}},
@@ -208,27 +208,53 @@ def put_user_follow_state():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_user_follow_works():
-    """我的关注作品动态"""
+def get_user_follow_works(domain=constant.DOMAIN):
+    """
+    我的关注作品动态
+    :param domain: 域名
+    """
     data = {}
     try:
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        dtime = datetime.datetime.now()
+        dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+        timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
+        now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
+        yesterday_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
         # 查询数据
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
-            {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
-                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$unset": ["works_item._id"]},
-            {"$project": {"_id": 0, "works_item": 1}}
+            # {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
+            #              "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
+            # {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            # {"$unset": ["works_item._id"]},
+            {"$project": {"_id": 0, "user_id": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
-        data_list = []
-        for doc in cursor:
-            for i in doc.get("works_item"):
-                data_list.append(i)
+        user_list = [doc["user_id"] for doc in cursor]
+        pipeline = [
+            {"$match": {"user_id": {"$in": user_list}, "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": int(time.time() * 1000)}}]}},
+            {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
+            {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
+            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "browse_records", "let": {"works_id": "$uid", "user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]},
+                                                                                                                                                   {"$eq": ["$user_id", user_id]}]}}}], "as": "browse_item"}},
+            {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
+                            "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
+                            "user_info": {"$arrayElemAt": ["$user_item", 0]}, "browse_info": {"$arrayElemAt": ["$browse_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]},
+                            "audio_info": {"$arrayElemAt": ["$audio_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
+            {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "video_url": "$video_info.video_url", 
+                            "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
+                            "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+            {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
+            {"$project": {"_id": 0}}
+        ]
+        cursor = manage.client["works"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
         count = len(data_list)
         data["count"] = count
         data["works_list"] = data_list
@@ -562,7 +588,7 @@ def get_user_follow_list():
             return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
         if int(page) < 1 or int(num) < 1:
             return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
-        data_list = follow_list_api(user_id, search_kw if search_kw else None, page, num)
+        data_list = follow_list_api(user_id, search_kw, page, num)
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -1278,6 +1304,7 @@ def post_pic_portrait(domain=constant.DOMAIN, home_length_max=128, nick_length_m
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
 
 # 弃用
 def post_pic_property(domain=constant.DOMAIN, home_length_max=128, nick_length_max=64):

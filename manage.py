@@ -364,6 +364,7 @@ def user_follow_search():
 
 
 @app.route(f"{url}/user/follow/cancel", methods=["PUT"])
+@auth_user_login
 def user_follow_cancel():
     """我的关注取消"""
     return app_user_api.put_user_follow_state()
@@ -709,6 +710,7 @@ def user_info_works_manage():
     return app_user_api.get_pic_works_details()
 
 
+# 弃用
 @app.route(f"{url}/user/portrait", methods=["POST"])
 @auth_user_login
 def user_portrait():
@@ -730,6 +732,7 @@ def user_portrait_editor():
     return app_user_api.put_pic_portrait_editor()
 
 
+# 弃用
 @app.route(f"{url}/user/property", methods=["POST"])
 @auth_user_login
 def user_property():
@@ -1250,6 +1253,7 @@ def admin_works_article_detail():
     return admin_works_api.get_article_works_detail()
 
 
+# 舍弃
 @app.route(f"{url}/admin/user/list", methods=["GET"])
 @auth_admin_login
 def admin_user_list():
@@ -1356,6 +1360,7 @@ def admin_create_org():
     return admin_user_api.post_create_org_account()
 
 
+# 舍弃
 @app.route(f"{url}/admin/user/audit", methods=["GET"])
 @auth_admin_login
 def admin_user_audit():
