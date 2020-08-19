@@ -517,18 +517,22 @@ def get_pic_list():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_video_top_list(video_top_max=10):
+def get_video_top_list(video_top_max=10, domain=constant.DOMAIN):
     """
     影集置顶列表
     :param video_top_max: 置顶影集个数
+    :param domain: 域名
     """
     try:
+        user_id = g.user_data["user_id"]
         # 置顶影集
         pipeline = [
             {"$match": {"order": {"$ne": None}}},
             {"$sort": SON([("order", 1)])},
             {"$limit": video_top_max},
-            {"$project": {"_id": 0, "uid": 1, "cover_url": 1, "titel": 1, "like_num": 1, "browse_num": 1}}
+            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$works_id"]}}}], "as": "like_item"}},
+            {"$project": {"_id": 0, "uid": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "top_titel": 1, "like_num": 1, "browse_num": 1, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+            {"$unset": ["like_info", "like_item"]}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]

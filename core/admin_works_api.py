@@ -358,7 +358,7 @@ def get_all_works_list(domain=constant.DOMAIN, search_max=32):
             return response(msg="Bad Request: Params 'state' is error.", code=1, status=400)
         if content and len(content) > search_max:
             return response(msg=f"搜索内容最长{search_max}个字符，请重新输入", code=1)
-        if type not in ["tp", "tj", "tw"]:
+        if type not in ["tp", "tj", "tw", "yj"]:
             return response(msg="Bad Request: Params 'type' is error.", code=1, status=400)
         # 查询
         pipeline = [
@@ -590,7 +590,7 @@ def get_atals_detail(domain=constant.DOMAIN):
         if not works_id:
             return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         pipeline = [
-            {"$match": {"uid": works_id, "type": "tj"}},
+            {"$match": {"uid": works_id, "type": {"$in": ["yj", "tj"]}}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},

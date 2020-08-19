@@ -31,20 +31,27 @@ from constant import constant
 from app_works_api import pic_upload_api
 
 
-def follow_list_api(user_id, domain=constant.DOMAIN):
+def follow_list_api(user_id, search_kw, page, num, domain=constant.DOMAIN):
     """
     我的/他的关注调用接口
     :param user_id: 用户id
     :param  domain: 域名
+    :param search_kw: 搜索内容
+    :param page: 页码
+    :param num: 页数
     """
     try:
         # 查询数据
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
             {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "works_num": 1}}
         ]
+        if search_kw:
+            pipeline.insert(2, {"$match": {"nick": {"$regex": search_kw}}})
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         return data_list
@@ -65,7 +72,7 @@ def fans_list_api(user_id, domain=constant.DOMAIN):
             {"$match": {"user_id": user_id, "state": 1}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
-            {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "login_time": 1}}
+            {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "create_time": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -240,12 +247,12 @@ def get_userinfo(domain=constant.DOMAIN):
         author_id = request.args.get("author_id")
         if author_id:
             pipeline = [
-                        {"$match": {"uid": author_id}},
-                        {"$project": {"_id": 0, "uid": 1, "nick": 1, "sex": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "sign": 1, "mobile": 1, 
-                                    "background_url": {"$concat": [domain, "$background_url"]}, "works_num": 1, "label": 1, "login_time": 1, "group": 1, 
-                                    "create_time": 1, "update_time": 1, "auth": 1}}
+                {"$match": {"uid": author_id}},
+                {"$project": {"_id": 0, "uid": 1, "nick": 1, "sex": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "sign": 1, "mobile": 1, 
+                            "background_url": {"$concat": [domain, "$background_url"]}, "works_num": 1, "label": 1, "login_time": 1, "group": 1, 
+                            "create_time": 1, "update_time": 1, "auth": 1}}
             ]
-            cursor = client["user"].aggregate(pipeline)
+            cursor = manage.client["user"].aggregate(pipeline)
             data_list = [doc for doc in cursor]
             user_info = data_list[0]
         # 计算注册时长
@@ -508,16 +515,17 @@ def post_withdrawal_apply():
 def get_user_home_page():
     """用户主页"""
     try:
+        user_id = g.user_data["user_id"]
         num = request.args.get("num", None)
         page = request.args.get("page", None)
-        user_id = request.args.get("user_id", None)
+        author_id = request.args.get("user_id", None)
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
         if not page:
             return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
         if int(page) < 1 or int(num) < 1:
             return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
-        if not user_id:
+        if not any([user_id, author_id]):
             return response(msg="Bad Request: Miss params 'user_id'.", code=1, status=400)
         # 查询数据
         # 用户信息
@@ -525,7 +533,7 @@ def get_user_home_page():
         # if not doc:
         #     return response(msg="Bad Request: The user does not exist.", code=1, status=400)
         # 用户作品
-        data_list = user_works_api(user_id, page, num)
+        works_list = user_works_api(author_id if author_id else user_id, page, num)
         return response(data=works_list)
     except Exception as e:
         manage.log.error(e)
@@ -536,10 +544,19 @@ def get_user_follow_list():
     """用户的关注列表"""
     try:
         # 参数
-        user_id = request.args.get("user_id", None)
+        user_id = request.args.get("user_id")
+        search_kw = request.args.get("search_kw")
+        page = request.args.get("page")
+        num = request.args.get("num")
         if not user_id:
             return response(msg="Bad Request: Miss params 'user_id'.", code=1, status=400)
-        data_list = follow_list_api(user_id)
+        if not num:
+            return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
+        if not page:
+            return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
+        if int(page) < 1 or int(num) < 1:
+            return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
+        data_list = follow_list_api(user_id, search_kw if search_kw else None, page, num)
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)

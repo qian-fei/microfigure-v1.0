@@ -219,42 +219,6 @@ def get_label_list():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-# def get_label_state():
-#     """可选栏目列表（隐藏、显示）"""
-#     try:
-#         # 参数
-#         num = request.args.get("num")
-#         page = request.args.get("page")
-#         type = request.args.get("type") # 图集传pic， 影集传video
-#         state = request.args.get("state") # 显示传1， 隐藏传0， 默认传-1
-#         # 校验参数
-#         if not num:
-#             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
-#         if not page:
-#             return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
-#         if int(page) < 1 or int(num) < 1:
-#             return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
-#         if type not in ["pic", "video"]:
-#             return response(msg="Bad Request: Params 'type' is error.", code=1, status=400)
-#         if state not in ["-1", "0", "1"]:
-#             return response(msg="Bad Request: Params 'state' is error.", code=1, status=400)
-#         # 查询
-#         pipeline = [
-#             {"$match": {"state": {"$ne": -1} if int(state) == -1 else {"$eq": int(state)} , "type": type}},
-#             {"$skip": (int(page) - 1) * int(num)},
-#             {"$limit": int(num)},
-#             {"$project": {"_id": 0}}
-#         ]
-#         cursor = manager.client["label"].aggregate(pipeline)
-#         data_list = [doc for doc in cursor]
-#         if not data_list:
-#             raise Exception("No data in the database")
-#         return response(data=data_list)
-#     except Exception as e:
-#         manage.log.error(e)
-#         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
-
-
 def put_lable_priority():
     """设置标签优先级"""
     try:
@@ -297,3 +261,117 @@ def put_show_label(option_max=20):
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
+
+def get_video_top_list(domain=constant.DOMAIN):
+    """
+    置顶影集列表
+    :param domain: 域名
+    """
+    try:
+        pipeline = [
+            {"$match": {"type": "yj", "order": {"$ne": None}}},
+            {"$project": {"_id": 0, "uid": 1, "top_title": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "update_time": 1, "order": 1}},
+            {"$sort": SON([(order, -1)])}
+        ]
+        cursor = manage.client["works"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        return response(data=data_list if data_list else [])
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def put_video_order_sort():
+    """置顶影集排序"""
+    try:
+        # 参数
+        works_id = request.json.get("works_id")
+        order = request.json.get("order") # 升序 +1  降序 -1
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'", code=1, status=400)
+        if order not in [-1, 1]:
+            return response(msg="Bad Request: Params 'order' is error", code=1, status=400)
+        doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"order": order}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: 'order' update failed.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def delete_video_works():
+    """删除置顶影集"""
+    try:
+        # 参数
+        works_id = request.json.get("works_id")
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'", code=1, status=400)
+        doc = manage.client["works"].update({"uid": works_id}, {"$set": {"order": None}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: 'order' update failed.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_option_video_list():
+    """提供选择的影集列表"""
+    try:
+        # 参数
+        content = request.args.get('content')
+        page = request.args.get("page")
+        num = request.args.get("num")
+        if not num:
+            return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
+        if not page:
+            return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
+        if int(page) < 1 or int(num) < 1:
+            return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
+        pipeline = [
+            {"$match": {"type": "yj", "order": {"$eq": None}, "title" if content else "null": {"$regex": content} if content else None}},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
+            {"$lookup": {"from": "user", "localField": "user_id", "foreignField": "uid", "as": "user_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "account": "$user_info.account"}},
+            {"$unset": ["user_item", "user_info"]},
+            {"$sort": SON([(order, -1)])}
+        ]
+        cursor = manage.client["works"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        return response(data=data_list if data_list else [])
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def put_video_works(limit=20):
+    """
+    编辑置顶影集接口
+    :param limit: 置顶影集数上限
+    """
+    try:
+        # 校验
+        count = manage.client["works"].find({"order": {"$ne": None}, "type": "yj"}).count()
+        if count >= limit:
+            return response(msg="置顶影集数，已超上限", code=1)
+        # 参数
+        video_info = request.get_json() # works_id top_title top_cover_url video_id
+        if works_id not in video_info:
+            if top_title not in video_info:
+                return response(msg="Bad Request: Miss params 'top_title'.", code=1, status=400)
+            if top_cover_url not in video_info:
+                return response(msg="Bad Request: Miss params 'top_cover_url'.", code=1, status=400)
+            if video_id not in video_info:
+                return response(msg="Bad Request: Miss params 'video_id'.", code=1, status=400)
+            manage.client["works"].update({"uid": video_info["video_id"]}, {"$set": video_info})
+        else:
+            if not video_info.values():
+                return response(msg="请填写影集相关信息", code=1, status=400)
+            manage.client["works"].update({"uid": video_info["works_id"]}, {"$set": video_info})
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s.", code=1, status=500)

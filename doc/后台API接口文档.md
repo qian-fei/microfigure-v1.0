@@ -732,6 +732,232 @@ PUT
 }
 ```
 
+##### 10.置顶影集列表
+
+请求URL：
+
+```
+/api/v1/admin/top/video/list
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+置顶影集列表接口
+```
+
+请求参数：无
+
+返回字段：
+
+|   返回字段    | 必须 | 字段类型 | 字段说明 | 备注 |
+| :-----------: | :--: | :------: | :------- | ---- |
+|      uid      |  是  |  String  | 作品id   |      |
+|   top_title   |  是  |  String  | 标题     |      |
+| top_cover_url |  是  |  String  | 封面     |      |
+|  browse_num   |  是  | Integer  | 浏览数   |      |
+|  comment_num  |  是  | Integer  | 评论数   |      |
+|   like_num    |  是  | Integer  | 点赞数   |      |
+|   share_num   |  是  | Integer  | 转发数   |      |
+|  update_time  |  是  | Integer  | 时间     |      |
+
+返回示例: 
+
+```json
+{
+    "data": [{
+        	"uid": "001",
+        	"top_title": "哈哈",
+        	"top_cover_url": "http://www.baidu.com/img/1.png",
+        	"browse_num": 10,
+        	"comment_num": 10,
+        	"like_num": 10,
+        	"share_num": 10,
+        	"update_time": 1254558145742
+    	},
+        ...
+    ],
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 11.置顶影集排序接口
+
+请求URL：
+
+```
+/api/v1/admin/top/video/sort
+```
+
+请求方式：
+
+```
+PUT
+```
+
+接口说明：
+
+```
+置顶影集排序。请求头需要携带module_id和permission_id
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注            |
+| :------: | :--: | :------: | :------- | --------------- |
+| works_id |  是  |  String  | 作品id   |                 |
+|  order   |  是  |  String  | 升降序   | 升序 +1 降序 -1 |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 12.删除置顶影集接口
+
+请求URL：
+
+```
+/api/v1/admin/top/video/delete
+```
+
+请求方式：
+
+```
+DELETE
+```
+
+接口说明：
+
+```
+置顶影集删除。请求头需要携带module_id和permission_id
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| :------: | :--: | :------: | :------- | ---- |
+| works_id |  是  |  String  | 作品id   |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 13.提供影集列表选择接口
+
+请求URL：
+
+```
+/api/v1/admin/top/video/choose
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+编辑时，选择置顶影集列表接口
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注     |
+| :------: | :--: | :------: | :------- | -------- |
+|   num    |  是  | Integer  | 页数     | 从1开始  |
+|   page   |  是  | Integer  | 页码     | 从1开始  |
+| content  |  否  |  String  | 类型     | 搜索内容 |
+
+返回字段：
+
+| 返回字段 | 必须 | 字段类型 | 字段说明 | 备注 |
+| :------: | :--: | :------: | :------- | ---- |
+|   uid    |  是  |  String  | 作品id   |      |
+|  title   |  是  |  String  | 标题     |      |
+| account  |  是  |  String  | 作者账号 |      |
+
+返回示例: 
+
+```json
+{
+    "data": [{
+        	"uid": "001",
+        	"title": "哈哈",
+        	"account": "17725021251",
+    	},
+        ...
+    ],
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 14.添加、编辑置顶影集接口
+
+请求URL：
+
+```
+/api/v1/admin/top/video/add
+```
+
+请求方式：
+
+```
+PUT
+```
+
+接口说明：
+
+```
+编辑、添加置顶影集。最多允许天机20个置顶影集。请求头需要携带module_id和permission_id
+```
+
+请求参数：
+
+|   请求参数    | 必须 | 参数类型 | 参数说明     |
+| :-----------: | :--: | :------: | :----------- |
+|   works_id    |  否  |  String  | 置顶影集id   |
+|   top_title   |  否  |  String  | 置顶影集标题 |
+| top_cover_url |  否  |  String  | 置顶影集封面 |
+|   video_id    |  否  |  String  | 被添加影集id |
+
+返回字段：无
+
+返回示例: 
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
 #### 四、用户管理模块
 
 ##### 1.用户列表接口（舍弃）

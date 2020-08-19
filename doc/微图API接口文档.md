@@ -587,30 +587,14 @@ GET
 
 返回字段：
 
-|   返回字段   | 必须 | 字段类型 | 字段说明     | 备注                                     |
-| :----------: | :--: | :------: | :----------- | ---------------------------------------- |
-|     uid      |  是  |  String  | 作品唯一id   |                                          |
-|   pic_item   |  否  |  Array   | 素材         |                                          |
-|  video_url   |  否  |  String  | 视频路径     |                                          |
-|  audio_url   |  否  |  String  | 音频路径     |                                          |
-|   user_id    |  否  |  String  | 用户id       |                                          |
-|     nick     |  是  |  String  | 用户昵称     |                                          |
-|    order     |  是  | Integer  | 置顶影集排序 |                                          |
-|    count     |  是  | Integer  | 计数         | 0代表未浏览，1代表已浏览                 |
-|  cover_url   |  否  |  String  | 封面路径     |                                          |
-|    title     |  是  |  String  | 标题         |                                          |
-|     desc     |  是  |  String  | 描述         |                                          |
-|    label     |  否  |  Array   | 标签         | 图文无标签                               |
-|    state     |  是  | Integer  | 状态         | -1删除  0未审核（默认） 1审核中  2已上架 |
-| is_recommend |  是  | Boolean  | 是否推荐     | true推荐  false取消推荐                  |
-|     type     |  是  |  String  | 分类         | tp图片 tj图集  yj影集  tw图文            |
-|   pic_num    |  否  | Integer  | 图片量       | 图文无图片量  图片为1  图集>1            |
-|   like_num   |  是  | Integer  | 点赞量       |                                          |
-| comment_num  |  是  | Integer  | 评论量       |                                          |
-|  share_num   |  是  | Integer  | 分享量       |                                          |
-|  browse_num  |  是  | Integer  | 浏览量       |                                          |
-| create_time  |  是  | Integer  | 创建时间     | 毫秒时间戳                               |
-| update_time  |  是  | Integer  | 更新时间     | 毫秒时间戳                               |
+|   返回字段    | 必须 | 字段类型 | 字段说明                | 备注 |
+| :-----------: | :--: | :------: | :---------------------- | ---- |
+|      uid      |  是  |  String  | 作品唯一id              |      |
+| top_cover_url |  是  |  String  | 置顶影集封面路径        |      |
+|   top_title   |  是  |  String  | 置顶影集标题            |      |
+|   like_num    |  是  | Integer  | 点赞量                  |      |
+|  browse_num   |  是  | Integer  | 浏览量                  |      |
+|    is_like    |  是  | Boolean  | true已点赞，false未点赞 |      |
 
 返回示例
 
@@ -619,35 +603,11 @@ GET
 	"data": [
         {
             "uid": "123456",	// 作品唯一id
-            "pic_item": [{
-            	"uid": "7893432",	// 图片唯一id
-                "works_id": "123456", // 作品id
-                "big_pic_url": "www.baidu.com/img/1.png",	// 大图
-                "thumb_url": "www.baidu.com/thumb/1.png", // 缩略图路径
-                ...
-            	},
-            	...
-            ],
-            "user_id": "123567",
-			"nick": "喜好",
-            "order": 1,
-            "count": 1,
-        	"video_url": "www.baidu.com/video/1.mp4",
-        	"audio_url": "www.baidu.com/audio/1.mp3",
-            "title": "生活",
-            "desc": "一个人生活",
-            "cover_url": "www.baidu.com/img/2.png",
-            "label": ["美好", "幸福"],
-        	"state": 2,
-        	"is_recommend": true,
-        	"type": "yj",
-        	"pic_num": 1,
+            "top_title": "生活",
+            "top_cover_url": "www.baidu.com/img/2.png",
         	"like_num": 666,
-        	"comment_num": 666,
-        	"share_num": 666,
         	"browse_num": 666,
-        	"create_time": 1593565215000,
-        	"update_time": 1593565215000
+            "is_like": true
         },
         ...   
     ],
@@ -1986,7 +1946,11 @@ GET
 第三方登录。 请求头必须携带token
 ```
 
-请求参数：无
+请求参数：
+
+| 请求参数  | 必须 | 参数类型 | 参数说明                         |
+| :-------: | :--: | :------: | :------------------------------- |
+| author_id |  否  |  String  | 作者id，查询作者信息时才需要传。 |
 
 返回字段：
 
@@ -2181,9 +2145,12 @@ GET
 
 请求参数：
 
-| 请求参数 | 必须 | 参数类型 | 参数说明 |
-| :------: | :--: | :------: | :------- |
-| user_id  |  是  |  String  | 用户id   |
+| 请求参数  | 必须 | 参数类型 | 参数说明   |
+| :-------: | :--: | :------: | :--------- |
+|  user_id  |  是  |  String  | 用户id     |
+| search_kw |  否  |  String  | 搜索关键词 |
+|   page    |  是  | Integer  | 页码       |
+|    num    |  是  | Integer  | 页数       |
 
 返回字段：
 
@@ -2623,83 +2590,71 @@ GET
 
 返回字段：
 
-|   返回字段   | 必须 | 字段类型 | 字段说明   | 备注                                                         |
-| :----------: | :--: | :------: | :--------- | ------------------------------------------------------------ |
-|  user_info   |  是  |  Array   | 外层结构   |                                                              |
-|  works_list  |  是  |  Array   | 外层结构   |                                                              |
-|     nick     |  是  |  String  | 用户昵称   | 【属于user_info】                                            |
-| head_img_url |  是  |  String  | 用户头像   | 【属于user_info】                                            |
-|     sign     |  是  |  String  | 签名       | 【属于user_info】                                            |
-|     uid      |  是  |  String  | 作品唯一id | 【属于works_list】                                           |
-|   pic_item   |  否  |  Array   | 素材       | 【属于works_list】                                           |
-|  video_url   |  否  |  String  | 视频路径   | 【属于works_list】                                           |
-|  audio_url   |  否  |  String  | 音频路径   | 【属于works_list】                                           |
-|  works_num   |  是  | Integer  | 作品数量   | 【属于works_list】                                           |
-|    count     |  是  | Integer  | 计数       | 0代表未浏览，1代表已浏览。【属于works_list】                 |
-|    title     |  是  |  String  | 标题       | 【属于works_list】                                           |
-|     desc     |  是  |  String  | 描述       | 【属于works_list】                                           |
-|  cover_url   |  否  |  String  | 封面路径   | 【属于works_list】                                           |
-|   is_like    |  是  | Boolean  | 是否点赞   | true已点赞，false未点赞。【属于works_list】                  |
-|   content    |  否  |  String  | 内容       | 图片路径插入文本中。【属于works_list】                       |
-|    label     |  否  |  Array   | 标签       | 图文无标签。【属于works_list】                               |
-|    state     |  是  | Integer  | 状态       | -1删除  0未审核（默认） 1审核中  2已上架。【属于works_list】 |
-| is_recommend |  是  | Boolean  | 是否推荐   | true推荐  false取消推荐。【属于works_list】                  |
-|     type     |  是  |  String  | 分类       | tp图片 tj图集  yj影集  tw图文。【属于works_list】            |
-|   pic_num    |  否  | Integer  | 图片量     | 图文无图片量  图片为1  图集>1 【属于works_list】             |
-|   like_num   |  是  | Integer  | 点赞量     | 【属于works_list】                                           |
-| comment_num  |  是  | Integer  | 评论量     | 【属于works_list】                                           |
-|  share_num   |  是  | Integer  | 分享量     | 【属于works_list】                                           |
-|  browse_num  |  是  | Integer  | 浏览量     | 【属于works_list】                                           |
-| create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳【属于works_list】                                 |
-| update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳【属于works_list】                                 |
+|   返回字段   | 必须 | 字段类型 | 字段说明   | 备注                                       |
+| :----------: | :--: | :------: | :--------- | ------------------------------------------ |
+|     uid      |  是  |  String  | 作品唯一id |                                            |
+|   pic_item   |  否  |  Array   | 素材       |                                            |
+|  video_url   |  否  |  String  | 视频路径   |                                            |
+|  audio_url   |  否  |  String  | 音频路径   |                                            |
+|  works_num   |  是  | Integer  | 作品数量   |                                            |
+|    count     |  是  | Integer  | 计数       | 0代表未浏览，1代表已浏览。                 |
+|    title     |  是  |  String  | 标题       |                                            |
+|     desc     |  是  |  String  | 描述       |                                            |
+|  cover_url   |  否  |  String  | 封面路径   |                                            |
+|   is_like    |  是  | Boolean  | 是否点赞   | true已点赞，false未点赞。                  |
+|   content    |  否  |  String  | 内容       | 图片路径插入文本中。                       |
+|    label     |  否  |  Array   | 标签       | 图文无标签。                               |
+|    state     |  是  | Integer  | 状态       | -1删除  0未审核（默认） 1审核中  2已上架。 |
+| is_recommend |  是  | Boolean  | 是否推荐   | true推荐  false取消推荐。                  |
+|     type     |  是  |  String  | 分类       | tp图片 tj图集  yj影集  tw图文。            |
+|   pic_num    |  否  | Integer  | 图片量     | 图文无图片量  图片为1  图集>1              |
+|   like_num   |  是  | Integer  | 点赞量     |                                            |
+| comment_num  |  是  | Integer  | 评论量     |                                            |
+|  share_num   |  是  | Integer  | 分享量     |                                            |
+|  browse_num  |  是  | Integer  | 浏览量     |                                            |
+| create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳                                 |
+| update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                                 |
 
 返回示例:
 
 ```json
 {
-	"data": {
-        "user_info": {
-            "nick": "喜好",
-            "head_img_url": "www.baidu.com/img/1.png",
-            "sign": "美好人生"
-        },
-        "works_list": [{
-            "uid": "123456",	// 作品唯一id
+    "data": [{
+            "uid": "123456", // 作品唯一id
             "pic_item": [{
-            	"uid": "7893432",	// 图片唯一id
-                "works_id": "123456", // 作品id
-                "big_pic_url": "www.baidu.com/img/1.png",	// 大图
-                "thumb_url": "www.baidu.com/thumb/1.png", // 缩略图路径
-                "title": "别墅"
+                    "uid": "7893432", // 图片唯一id
+                    "works_id": "123456", // 作品id
+                    "big_pic_url": "www.baidu.com/img/1.png", // 大图
+                    "thumb_url": "www.baidu.com/thumb/1.png", // 缩略图路径
+                    "title": "别墅"
+                        ...
+                },
                 ...
-            	},
-            	...
             ],
             "user_id": "123567",
             "count": 1,
-        	"video_url": "www.baidu.com/video/1.mp4",
-        	"audio_url": "www.baidu.com/audio/1.mp3",
-        	"works_num": 250,
+            "video_url": "www.baidu.com/video/1.mp4",
+            "audio_url": "www.baidu.com/audio/1.mp3",
+            "works_num": 250,
             "title": "生活",
             "desc": "一个人生活",
             "cover_url": Null,
             "content": Null,
             "label": ["美好", "幸福"],
-        	"state": 2,
-        	"is_recommend": true,
-        	"type": "tj",
+            "state": 2,
+            "is_recommend": true,
+            "type": "tj",
             "is_like": true,
-        	"pic_num": 1,
-        	"like_num": 666,
-        	"comment_num": 666,
-        	"share_num": 666,
-        	"browse_num": 666,
-        	"create_time": 1593565215000,
-        	"update_time": 1593565215000
-        	},
-        	...   
-    	]
-    },
+            "pic_num": 1,
+            "like_num": 666,
+            "comment_num": 666,
+            "share_num": 666,
+            "browse_num": 666,
+            "create_time": 1593565215000,
+            "update_time": 1593565215000
+        },
+        ...
+    ],
     "msg": "Request successful.",
     "code": 0
 }
@@ -2733,12 +2688,12 @@ GET
 
 返回字段：
 
-|   返回字段   | 必须 | 字段类型 | 字段说明             |
-| :----------: | :--: | :------: | :------------------- |
-|   user_id    |  是  |  String  | uid                  |
-|     nick     |  是  |  String  | 昵称                 |
-| head_img_url |  是  |  String  | 头像                 |
-|  login_time  |  是  | Integer  | 最后登录时间，时间戳 |
+|   返回字段   | 必须 | 字段类型 | 字段说明 |
+| :----------: | :--: | :------: | :------- |
+|   user_id    |  是  |  String  | uid      |
+|     nick     |  是  |  String  | 昵称     |
+| head_img_url |  是  |  String  | 头像     |
+| create_time  |  是  | Integer  | 创建时间 |
 
 返回示例：
 
@@ -2748,7 +2703,7 @@ GET
         "user_id": "123468",
         "nick": "二娃",
         "head_img_url": "http://www.baidu.com/img/1.png",
-        "login_time": 1593565215000
+        "create_time": 1593565215000
     	},
         ...
     ],

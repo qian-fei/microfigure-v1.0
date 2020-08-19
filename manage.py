@@ -1054,6 +1054,44 @@ def admin_front_label_state():
     return admin_front_api.put_show_label()
 
 
+@app.route(f"{url}/admin/top/video/list", methods=["GET"])
+@auth_admin_login
+def admin_front_video_list():
+    """后台前台置顶影集列表接口"""
+    return admin_front_api.get_video_top_list()
+
+
+@app.route(f"{url}/admin/top/video/sort", methods=["PUT"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_video_sort():
+    """后台前台置顶影集排序接口"""
+    return admin_front_api.put_video_order_sort()
+
+
+@app.route(f"{url}/admin/top/video/delete", methods=["DELETE"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_video_delete():
+    """后台前台置顶影集删除接口"""
+    return admin_front_api.delete_video_works()
+
+
+@app.route(f"{url}/admin/top/video/choose", methods=["GET"])
+@auth_admin_login
+def admin_front_video_choose():
+    """后台前台置添加置顶影集时，提供可选影集列表接口"""
+    return admin_front_api.get_option_video_list()
+
+
+@app.route(f"{url}/admin/top/video/add", methods=["PUT"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_video_add():
+    """后台前台置添加置顶影集接口"""
+    return admin_front_api.put_video_works()
+
+
 @app.route(f"{url}/admin/material/pic/list", methods=["GET"])
 @auth_admin_login
 def admin_material_list():
