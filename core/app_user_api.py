@@ -47,11 +47,14 @@ def follow_list_api(user_id, search_kw, page, num, domain=constant.DOMAIN):
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
+            # {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$addFields": {"head_img_url": "$user_info.head_img_url", "nick": "$user_info.nick", "works_num": "$user_info.works_num"}},
+            {"$unset": ["user_item", "user_info"]},
             {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "works_num": 1}}
         ]
         if search_kw:
-            pipeline.insert(2, {"$match": {"nick": {"$regex": search_kw}}})
+            pipeline.insert(4, {"$match": {"nick": {"$regex": search_kw}}})
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         return data_list
@@ -71,7 +74,10 @@ def fans_list_api(user_id, domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
+            # {"$replaceRoot": {"$newRoot": {"$mergeObjects": [{"$arrayElemAt": ["$user_item", 0]}]}}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$addFields": {"head_img_url": "$user_info.head_img_url", "nick": "$user_info.nick"}},
+            {"$unset": ["user_item", "user_info"]},
             {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "create_time": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
@@ -213,7 +219,7 @@ def get_user_follow_works():
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
             {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
-                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "$create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
+                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$unset": ["works_item._id"]},
             {"$project": {"_id": 0, "works_item": 1}}

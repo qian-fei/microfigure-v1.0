@@ -369,7 +369,8 @@ def user_follow_cancel():
     return app_user_api.put_user_follow_state()
 
 
-@app.route(f"{url}/user/follow/news", methods=["PUT"])
+@app.route(f"{url}/user/follow/news", methods=["GET"])
+@auth_user_login
 def user_follow_news():
     """我的关注作品最新动态"""
     return app_user_api.get_user_follow_works()

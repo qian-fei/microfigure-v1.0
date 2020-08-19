@@ -1234,3 +1234,47 @@
 2020-08-19 15:07:31,195 manage.py[line:43] INFO: The application has started.
 2020-08-19 15:08:09,421 manage.py[line:43] INFO: The application has started.
 2020-08-19 15:08:09,573 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:20:45,346 app_user_api.py[line:59] ERROR: BSON field '$replaceRoot.$newRoot' is an unknown field.
+2020-08-19 15:20:45,346 app_user_api.py[line:562] ERROR: Object of type Response is not JSON serializable
+2020-08-19 15:20:58,020 app_user_api.py[line:59] ERROR: BSON field '$replaceRoot.$newRoot' is an unknown field.
+2020-08-19 15:20:58,020 app_user_api.py[line:562] ERROR: Object of type Response is not JSON serializable
+2020-08-19 15:22:54,161 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:22:54,307 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:23:02,588 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:23:02,743 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:23:51,814 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:23:51,971 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:24:33,048 app_user_api.py[line:82] ERROR: BSON field '$replaceRoot.$newRoot' is an unknown field.
+2020-08-19 15:24:33,048 app_user_api.py[line:580] ERROR: Object of type Response is not JSON serializable
+2020-08-19 15:25:01,898 app_user_api.py[line:82] ERROR: BSON field '$replaceRoot.$newRoot' is an unknown field.
+2020-08-19 15:25:01,898 app_user_api.py[line:580] ERROR: Object of type Response is not JSON serializable
+2020-08-19 15:28:39,877 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:28:40,016 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:28:41,051 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:28:41,200 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:48:37,535 app_user_api.py[line:237] ERROR: '_AppCtxGlobals' object has no attribute 'user_data'
+2020-08-19 15:49:26,829 app_user_api.py[line:237] ERROR: '_AppCtxGlobals' object has no attribute 'user_data'
+2020-08-19 15:49:34,803 app_user_api.py[line:237] ERROR: '_AppCtxGlobals' object has no attribute 'user_data'
+2020-08-19 15:52:02,949 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:52:03,091 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:52:59,790 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:52:59,945 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:53:11,381 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:53:11,525 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:53:14,296 app_user_api.py[line:237] ERROR: unknown top level operator: $create_time
+2020-08-19 15:54:28,521 manage.py[line:43] INFO: The application has started.
+2020-08-19 15:54:28,660 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:22,928 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:23,076 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:45,420 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:45,565 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:54,672 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:04:54,818 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:13:31,779 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:13:31,926 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:14:05,973 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:14:06,124 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:14:22,737 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:14:22,926 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:16:02,641 manage.py[line:43] INFO: The application has started.
+2020-08-19 16:16:02,785 manage.py[line:43] INFO: The application has started.

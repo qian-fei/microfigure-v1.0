@@ -36,8 +36,8 @@ def ssh_connect_mongo():
     server = SSHTunnelForwarder(
         ssh_address_or_host="120.26.218.247", # 远程服务器IP
         ssh_username = "root", # 远程服务器用户名
-        ssh_password = "wwwgli20160503CN" , # 远程服务器密码
-        remote_bind_address = ("127.0.0.1", 27018) # 远程服务器mongo绑定的端口
+        ssh_password = "www.gli.cn123!!@#" , # 远程服务器密码
+        remote_bind_address = ("127.0.0.1", 27017) # 远程服务器mongo绑定的端口
     ) 
     server.start()
     client = pymongo.MongoClient("127.0.0.1",server.local_bind_port)
@@ -122,11 +122,11 @@ def post_audio_upload_common(domain=constant.DOMAIN):
             file_path = i["file_path"]
             i["file_path"] = domain + file_path
             # 音频写入me中me_music表
-            from dateutil import parser 
-            date = parser.parse(datetime.datetime.utcnow().isoformat()) # mongo Date格式的时间
-            condition = {"music_path": file_path, "muisc_upload_user": user_id, "createAt": date, "updateAt": date}
-            client_me = ssh_connect_mongo()
-            client_me["me_music"].insert(condition)
+            # from dateutil import parser 
+            # date = parser.parse(datetime.datetime.utcnow().isoformat()) # mongo Date格式的时间
+            # condition = {"music_path": file_path, "muisc_upload_user": user_id, "createAt": date, "updateAt": date}
+            # client_me = ssh_connect_mongo()
+            # client_me["me_music"].insert(condition)
         return response(data=data)
     except Exception as e:
         manage.log.error(e)

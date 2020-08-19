@@ -81,6 +81,7 @@ def get_user_filter_list(search_max=16, domain=constant.DOMAIN):
         page = request.args.get("page") # ≥1
         category = request.args.get("category") # 账号传account, 昵称传nick
         content = request.args.get("content")
+        group = request.args.get("group") # default全部 comm一般用户，auth认证摄影师
         # 校验参数
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
@@ -94,7 +95,8 @@ def get_user_filter_list(search_max=16, domain=constant.DOMAIN):
             return response(msg="搜索内容最长16个字符，请重新输入", code=1)
         # 查询
         pipeline = [
-            {"$match": {"type": "user", "state": {"$ne": -1}, ("nick" if category == "nick" else "account") if content else "null": {"$regex": content} if content else None}},
+            {"$match": {"type": "user", "state": {"$ne": -1}, "group" if group != "default" else "null": group if group != "default" else None, 
+                        ("nick" if category == "nick" else "account") if content else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$project": {"_id": 0, "uid": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "nick": 1, "account": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
