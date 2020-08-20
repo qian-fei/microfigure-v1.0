@@ -452,13 +452,13 @@ def get_user_data_statistic():
         # 查询数据
         pipeline = [
             {"$match": {"user_id": user_id}},
-            {"$groud": {"_id": "$user_id", "browse_num": {"$sum": "$browse_num"}, "sale_num": {"$sum": "$sale_num"}, "comment_num": {"$sum": "$comment_num"}, "amount_num": {"$sum": "$amount"}, 
+            {"$group": {"_id": "$user_id", "browse_num": {"$sum": "$browse_num"}, "sale_num": {"$sum": "$sale_num"}, "comment_num": {"$sum": "$comment_num"}, "amount_num": {"$sum": "$amount"}, 
                         "share_num": {"$sum": "$share_num"}, "like_num": {"$sum": "$like_num"}}},
             {"$project": {"_id": 0, "browse_num": 1, "comment_num": 1, "amount_num": 1, "share_num": 1, "like_num": 1, "sale_num": 1}}
         ]
         cursor = manage.client["user_statistical"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        return response(data=data_list)
+        return response(data=data_list[0])
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
@@ -493,18 +493,18 @@ def get_user_balance():
         # 查询数据
         # 当前与昨天时间
         today = datetime.datetime.now()
-        date = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
-        timeArray = datetime.datetime.strptime(t, "%Y-%m-%d %H:%M:%S")
+        date = today.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+        timeArray = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         today_stamp = int(time.mktime(timeArray.timetuple()) * 1000)
         yesterday_stamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
         doc = manage.client["user"].find_one({"uid": user_id, "state": 1}, {"_id": 0, "balance": 1})
         data["balance"] = doc.get("balance")
         doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": yesterday_stamp}, {"_id": 0, "amount": 1})
-        data["amount"] = doc.get("amount")
+        data["amount"] = doc.get("amount") if doc else float(0)
         cursor = manage.client["support_method"].find({})
         fees = [doc for doc in cursor][0]["fees"]
         data["fees"] = int(fees * 100)
-        data["lock"] = 200
+        data["lock"] = float(200)
         return response(data=data)
     except Exception as e:
         manage.log.error(e)
@@ -2045,8 +2045,9 @@ def post_share_works():
         timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
         doc = manage.client["user_statistical"].update({"user_id": user_id, "date": timestamp}, {"$inc": {"share_num": 1}})
         if doc["n"] == 0:
-            manage.client["user_statistical"].insert({"user_id": user_id, "date": timestamp, "share_num": 1, "create_time": int(time.time() * 1000),
-                                                      "update_time": int(time.time() * 1000)})
+            condition = {"user_id": user_id, "date": timestamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+                         "comment_num": 0, "share_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
         return response()
     except Exception as e:
         manage.log.error(e)

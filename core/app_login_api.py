@@ -199,7 +199,11 @@ def post_register(nick_limit=8):
         # 凌晨时间戳
         today = datetime.date.today()
         today_stamp = int(time.mktime(today.timetuple()) * 1000)
-        manage.client["user_statistical"].insert({"user_id": uid, "date": today_stamp, "register_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        doc = manage.client["user_statistical"].update({"user_id": uid, "date": today_stamp}, {"$inc": {"register_num": 1}})
+        if doc["n"] == 0:
+            condition = {"user_id": uid, "date": timestamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 1,
+                        "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
         # 生成token
         data = {"uid": str(uid)}
         md5_token = hashlib.md5(str(data).encode()).hexdigest()

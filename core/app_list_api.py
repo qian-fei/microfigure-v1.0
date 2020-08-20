@@ -253,7 +253,9 @@ def post_browse_records():
             if doc:
                 manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
             else:
-                manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "browse_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 1, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+                             "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                manage.client["user_statistical"].insert(condition)
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -895,7 +897,9 @@ def post_works_like():
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"like_num": 1}})
         else:
-            manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "like_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 1, "goods_num": 0, "register_num": 0,
+                         "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
         # 记录点赞记录
         doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "type": "zp"})
         if doc:
@@ -989,7 +993,9 @@ def  post_comment_records():
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"comment_num": 1}})
         else:
-            manage.client["user_statistical"].insert({"user_id": author_id, "date": today_stamp, "comment_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+                         "comment_num": 1, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
         return response()
     except Exception as e:
         manage.log.error(e)

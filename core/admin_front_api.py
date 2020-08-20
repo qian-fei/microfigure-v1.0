@@ -286,7 +286,7 @@ def put_video_order_sort():
     try:
         # 参数
         works_id = request.json.get("works_id")
-        order = request.json.get("order") # 升序 +1  降序 -1
+        order = request.json.get("order") # 升序 1  降序 -1
         if not works_id:
             return response(msg="Bad Request: Miss params: 'works_id'", code=1, status=400)
         if order not in [-1, 1]:
@@ -318,6 +318,7 @@ def delete_video_works():
 
 def get_option_video_list():
     """提供选择的影集列表"""
+    data = {}
     try:
         # 参数
         content = request.args.get('content')
@@ -337,20 +338,30 @@ def get_option_video_list():
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "account": "$user_info.account"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$sort": SON([(order, -1)])}
+            {"$sort": SON([("order", -1)])}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        return response(data=data_list if data_list else [])
+        pipeline = [
+            {"$match": {"type": "yj", "order": {"$eq": None}, "title" if content else "null": {"$regex": content} if content else None}},
+            {"$count": "count"}
+        ]
+        cursor = manage.client["works"].aggregate(pipeline)
+        temp_list = [doc for doc in cursor]
+        count = temp_list[0]["count"] if temp_list else 0
+        data["list"] = data_list
+        data["count"] = count
+        return response(data=data)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def put_video_works(limit=20):
+def put_video_works(limit=20, domain=constant.DOMAIN):
     """
     编辑置顶影集接口
     :param limit: 置顶影集数上限
+    :param domain: 域名
     """
     try:
         # 校验
@@ -359,19 +370,33 @@ def put_video_works(limit=20):
             return response(msg="置顶影集数，已超上限", code=1)
         # 参数
         video_info = request.get_json() # works_id top_title top_cover_url video_id
-        if works_id not in video_info:
-            if top_title not in video_info:
+        if "works_id" not in video_info:
+            if "top_title" not in video_info:
                 return response(msg="Bad Request: Miss params 'top_title'.", code=1, status=400)
-            if top_cover_url not in video_info:
+            if "top_cover_url" not in video_info:
                 return response(msg="Bad Request: Miss params 'top_cover_url'.", code=1, status=400)
-            if video_id not in video_info:
+            if "video_id" not in video_info:
                 return response(msg="Bad Request: Miss params 'video_id'.", code=1, status=400)
-            manage.client["works"].update({"uid": video_info["video_id"]}, {"$set": video_info})
+            video_id = video_info["video_id"]
+            video_info.pop("video_id")
+            video_info.update({"order": 1})
+            video_info["top_cover_url"] = video_info["top_cover_url"].replace(domain, "")
+            manage.client["works"].update({"uid": video_id}, {"$set": video_info})
         else:
             if not video_info.values():
                 return response(msg="请填写影集相关信息", code=1, status=400)
-            manage.client["works"].update({"uid": video_info["works_id"]}, {"$set": video_info})
+            works_id = video_info["works_id"]
+            video_id = video_info["video_id"]
+            video_info.pop("works_id")
+            if "top_cover_url" in video_info:
+                video_info["top_cover_url"] = video_info["top_cover_url"].replace(domain, "")
+            if "video_id" in video_info:
+                video_info.pop("video_id")
+                manage.client["works"].update({"uid": works_id}, {"$set": {"order": None, "top_title": None, "top_cover_url": None}})
+                manage.client["works"].update({"uid": video_id}, {"$set": video_info})
+            else:
+                manage.client["works"].update({"uid": works_id}, {"$set": video_info})
         return response()
     except Exception as e:
         manage.log.error(e)
-        return response(msg="Internal Server Error: %s.", code=1, status=500)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

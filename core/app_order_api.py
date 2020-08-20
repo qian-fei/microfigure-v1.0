@@ -414,8 +414,9 @@ def post_app_callback():
         timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
         doc = manage.client["user_statistical"].update({"user_id": user_id, "date": timestamp}, {"$inc": {"sale_num": 1, "amount": total_amount}})
         if doc["n"] == 0:
-            manage.client["user_statistical"].insert({"user_id": user_id, "date": timestamp, "amount": total_amount, "sale_num": 1, "create_time": int(time.time() * 1000),
-                                                      "update_time": int(time.time() * 1000)})
+            condition = {"user_id": user_id, "date": timestamp, "works_num": 0, "sale_num": 1, "browse_num": 0, "amount": total_amount, "like_num": 0, "goods_num": 0, "register_num": 0,
+                         "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
         return response()
     except Exception as e:
         manage.log.error(e)
