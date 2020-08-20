@@ -542,6 +542,13 @@ def user_history_comment():
     return app_user_api.get_user_comment_history()
 
 
+@app.route(f"{url}/user/history/like", methods=["GET"])
+@auth_user_login
+def user_history_comment_like():
+    """我的点赞历史记录"""
+    return app_user_api.get_user_like_history()
+
+
 @app.route(f"{url}/user/goods/list", methods=["GET"])
 @auth_user_login
 def user_goods_list():

@@ -2546,6 +2546,8 @@ GET
 | :------: | :--: | :------: | :------- |
 | balance  |  是  |  Float   | 账户余额 |
 |  amount  |  是  |  Float   | 昨日收益 |
+|   fees   |  是  | Integer  | 手续费   |
+|   lock   |  是  | Integer  | 锁定数字 |
 
 返回示例：
 
@@ -2553,7 +2555,9 @@ GET
 {
     "data": {
     	"balance": 250.0,
-    	"amount": 250.0
+    	"amount": 250.0,
+        "fees": 1,
+        "lock": 200
     }
     "msg": "Request successful.",
     "code": 0
@@ -2842,6 +2846,8 @@ GET
 
 |   返回字段   | 必须 | 字段类型 | 字段说明               |
 | :----------: | :--: | :------: | :--------------------- |
+|     uid      |  是  |  String  | 唯一id                 |
+|   works_id   |  是  |  String  | 作品id                 |
 |     nick     |  是  |  String  | 昵称                   |
 |   is_like    |  是  | Boolean  | true已点赞,false未点赞 |
 |   like_num   |  是  | Integer  | 点赞数                 |
@@ -2853,6 +2859,8 @@ GET
 ```json
 {
     "data": [{
+        "uid": "0001",
+        "works_id": "0002",
         "title": "大哥大",
         "nick": "中国",
         "is_like": true,

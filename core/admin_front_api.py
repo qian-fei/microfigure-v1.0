@@ -271,7 +271,7 @@ def get_video_top_list(domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"type": "yj", "order": {"$ne": None}}},
             {"$project": {"_id": 0, "uid": 1, "top_title": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "update_time": 1, "order": 1}},
-            {"$sort": SON([(order, -1)])}
+            {"$sort": SON([("order", -1)])}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]

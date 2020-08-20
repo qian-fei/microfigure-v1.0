@@ -54,7 +54,7 @@ def follow_list_api(user_id, search_kw, page, num, domain=constant.DOMAIN):
             {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "works_num": 1}}
         ]
         if search_kw != "default":
-            pipeline.insert(6, {"$match": {"nick": {"$regex": search_kw}}})
+            pipeline.insert(6, {"$match": {"nick": {"$regex": f"{search_kw}"}}})
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         return data_list
@@ -501,6 +501,10 @@ def get_user_balance():
         data["balance"] = doc.get("balance")
         doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": yesterday_stamp}, {"_id": 0, "amount": 1})
         data["amount"] = doc.get("amount")
+        cursor = manage.client["support_method"].find({})
+        fees = [doc for doc in cursor][0]["fees"]
+        data["fees"] = int(fees * 100)
+        data["lock"] = 200
         return response(data=data)
     except Exception as e:
         manage.log.error(e)
@@ -669,9 +673,9 @@ def get_user_comment_history(domain=constant.DOMAIN):
             {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}, "like_num": {"$size": "$like_item"}, 
-                            "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "title": {"$works_info.title"}}},
+                            "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "title": "$works_info.title"}},
             {"$unset": ["user_info", "user_item", "works_item"]},
-            {"$project": {"_id": 0, "nick": 1, "is_like": 1, "like_num": 1, "head_img_url": 1, "title": 1}}
+            {"$project": {"_id": 0, "nick": 1, "is_like": 1, "like_num": 1, "head_img_url": 1, "title": 1, "uid": 1, "works_id": 1}}
         ]
         cursor = manage.client["comment"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -711,7 +715,7 @@ def get_user_like_history(domain=constant.DOMAIN):
             {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}, "like_num": {"$size": "$like_item"}, 
-                            "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "title": {"$works_info.title"}}},
+                            "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "title": "$works_info.title"}},
             {"$unset": ["user_info", "user_item", "works_item"]},
             {"$match": {"is_like": True}},
             {"$project": {"_id": 0, "nick": 1, "is_like": 1, "like_num": 1, "head_img_url": 1, "title": 1}}

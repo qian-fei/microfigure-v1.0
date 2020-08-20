@@ -1332,3 +1332,31 @@
 2020-08-19 17:49:20,353 manage.py[line:43] INFO: The application has started.
 2020-08-19 17:49:49,034 manage.py[line:43] INFO: The application has started.
 2020-08-19 17:49:49,186 manage.py[line:43] INFO: The application has started.
+2020-08-19 18:00:15,001 app_user_api.py[line:62] ERROR: $regex has to be a string
+2020-08-19 18:00:15,001 app_user_api.py[line:594] ERROR: Object of type Response is not JSON serializable
+2020-08-19 18:04:09,366 manage.py[line:43] INFO: The application has started.
+2020-08-19 18:04:09,505 manage.py[line:43] INFO: The application has started.
+2020-08-20 09:51:20,543 manage.py[line:43] INFO: The application has started.
+2020-08-20 09:51:20,704 manage.py[line:43] INFO: The application has started.
+2020-08-20 09:58:09,146 manage.py[line:43] INFO: The application has started.
+2020-08-20 09:58:09,288 manage.py[line:43] INFO: The application has started.
+2020-08-20 10:08:55,988 admin_front_api.py[line:280] ERROR: name 'order' is not defined
+2020-08-20 10:11:05,067 manage.py[line:43] INFO: The application has started.
+2020-08-20 10:11:05,213 manage.py[line:43] INFO: The application has started.
+2020-08-20 10:53:51,056 app_user_api.py[line:680] ERROR: cannot encode object: {'$works_info.title'}, of type: <class 'set'>
+2020-08-20 11:14:32,723 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:14:32,869 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:14:37,975 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:14:38,236 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:15:06,986 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:15:07,129 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:15:30,401 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:15:30,547 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:40:11,751 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:40:11,894 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:40:39,703 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:40:39,843 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:41:38,759 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:41:38,906 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:41:55,698 manage.py[line:43] INFO: The application has started.
+2020-08-20 11:41:55,848 manage.py[line:43] INFO: The application has started.
