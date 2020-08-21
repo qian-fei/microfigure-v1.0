@@ -388,3 +388,51 @@ def put_add_permissions_role_editor(nick_length_max=32, desc_length_max=128):
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_system_backup():
+    """系统备份"""
+    try:
+        # 参数
+        name = request.json.get("name")
+        instruction = request.json.get("instruction")
+        if not name:
+            return response(msg="请输入备份名称", code=1)
+        if not instruction:
+            return response(msg="请输入备份说明", code=1)
+        """
+        备份内容：角色权限、平台定价、可选栏目、热搜词、文档管理、评论敏感词
+        """
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        # 角色权限备份
+        cursor_module = manage.client["module"].find({})
+        module_list = list(cursor_module)
+        cursor_permission = manage.client["permission"].find({})
+        permission_list = list(cursor_permission)
+        cursor_role = manage.client["role"].find({})
+        role_list = list(cursor_role)
+        with open(f"{BASE_DIR}/statics/files/module_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(module_list).encode("utf-8"))
+        with open(f"{BASE_DIR}/statics/files/permission_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(permission_list).encode("utf-8"))
+        with open(f"{BASE_DIR}/statics/files/role_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(role_list).encode("utf-8"))
+        # 平台定价
+        cursor_price = manage.client["module"].find({"uid": "001"})
+        price_list = list(cursor_price)
+        with open(f"{BASE_DIR}/statics/files/price_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(price_list).encode("utf-8"))
+        # 可选栏目
+        cursor_label = manage.client["label"].find({})
+        label_list = list(cursor_label)
+        with open(f"{BASE_DIR}/statics/files/label_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(label_list).encode("utf-8"))
+        # 敏感词
+        cursor_bad = manage.client["bad"].find({})
+        bad_list = list(cursor_bad)
+        with open(f"{BASE_DIR}/statics/files/bad_{int(time.time() * 1000)}.json", "wb") as f:
+            f.write(str(bad_list).encode("utf-8"))
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

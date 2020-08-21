@@ -245,6 +245,7 @@ def hot_article_list():
 
 
 @app.route(f"{url}/video/top", methods=["GET"])
+@auth_user_login
 def video_top_list():
     """影集置顶列表接口"""
     return app_list_api.get_video_top_list()
@@ -346,12 +347,14 @@ def user_logout():
 
 
 @app.route(f"{url}/user/message", methods=["GET"])
+@auth_user_login
 def user_message():
     """我的消息"""
     return app_user_api.get_user_message()
 
 
 @app.route(f"{url}/user/message/alter", methods=["PUT"])
+@auth_user_login
 def user_message_alter():
     """删除我的消息"""
     return app_user_api.put_user_message_alter()
@@ -488,11 +491,11 @@ def user_data_statistic():
     return app_user_api.get_user_data_statistic()
 
 
-@app.route(f"{url}/user/paymethod", methods=["GET"])
+@app.route(f"{url}/withdrawal/bank", methods=["GET"])
 @auth_user_login
-def user_paymethod_show():
-    """用户支付方式展示接口"""
-    return app_user_api.get_user_paymethod_show()
+def withdrawal_bank_show():
+    """提现银行接口"""
+    return app_user_api.get_user_withdrawal_bank()
 
 
 @app.route(f"{url}/user/balance", methods=["GET"])
@@ -554,6 +557,13 @@ def user_history_comment_like():
 def user_goods_list():
     """我的商品列表"""
     return app_user_api.get_user_goods_list()
+
+
+@app.route(f"{url}/user/goods/state", methods=["PUT"])
+@auth_user_login
+def user_goods_state():
+    """删除图片商品"""
+    return app_user_api.put_user_goods_state()
 
 
 @app.route(f"{url}/user/goods/detail", methods=["GET"])

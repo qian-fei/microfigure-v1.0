@@ -312,9 +312,28 @@ temp = {
 # t1 = 1597116590000
 # t2 = 1597120250000
 # print((t2 - t1) // 60000)
-dtime = datetime.datetime.now()
-dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
-timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
-now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
-yesterday_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
-print(now_timestamp, yesterday_timestamp)
+# dtime = datetime.datetime.now()
+# dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+# timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
+# now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
+# yesterday_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
+# print(now_timestamp, yesterday_timestamp)
+
+# lst = [{"nage": 1, "age": 2}, {"nage": 4, "age": 3}]
+
+# # with open("demo.json", "wb") as f:
+# #     f.write(str(lst).encode("utf-8"))
+import json
+with open("demo.json", "rb") as f:
+    cont = f.read()
+
+
+# # # rest = eval(cont.decode("utf-8"))
+# # temp = cont.decode("utf-8")
+# # print(temp, type(temp))
+g = cont.decode("utf-8")
+print(g, type(g))
+rest = json.loads(str(g))
+print(rest, type(rest))
+for doc in rest:
+    print(doc)

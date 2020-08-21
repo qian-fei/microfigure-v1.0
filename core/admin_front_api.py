@@ -324,14 +324,18 @@ def get_option_video_list():
         content = request.args.get('content')
         page = request.args.get("page")
         num = request.args.get("num")
+        type = request.args.get("type") #添加add 编辑editor
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
         if not page:
             return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
         if int(page) < 1 or int(num) < 1:
             return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
+        if not type:
+            return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
         pipeline = [
-            {"$match": {"type": "yj", "order": {"$eq": None}, "title" if content else "null": {"$regex": content} if content else None}},
+            {"$match": {"type": "yj", "order" if type == "add" else "null": {"$eq": None} if type == "add" else None, 
+                        "title" if content else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "localField": "user_id", "foreignField": "uid", "as": "user_item"}},
@@ -343,7 +347,8 @@ def get_option_video_list():
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         pipeline = [
-            {"$match": {"type": "yj", "order": {"$eq": None}, "title" if content else "null": {"$regex": content} if content else None}},
+            {"$match": {"type": "yj", "order" if type == "add" else "null": {"$eq": None} if type == "add" else None, 
+                        "title" if content else "null": {"$regex": content} if content else None}},
             {"$count": "count"}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -390,8 +395,9 @@ def put_video_works(limit=20, domain=constant.DOMAIN):
             video_info.pop("works_id")
             if "top_cover_url" in video_info:
                 video_info["top_cover_url"] = video_info["top_cover_url"].replace(domain, "")
-            if "video_id" in video_info:
+            if video_id != works_id:
                 video_info.pop("video_id")
+                video_info.update({"order": 1})
                 manage.client["works"].update({"uid": works_id}, {"$set": {"order": None, "top_title": None, "top_cover_url": None}})
                 manage.client["works"].update({"uid": video_id}, {"$set": video_info})
             else:

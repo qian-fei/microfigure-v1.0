@@ -130,10 +130,24 @@ def get_user_message():
     """我的消息"""
     try:
         user_id = g.user_data["user_id"]
+        page= request.args.get("page")
+        num = request.args.get("num")
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        if not num:
+            return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
+        if not page:
+            return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
+        if int(page) < 1 or int(num) < 1:
+            return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
         # 查询数据
-        cursor = manage.client["message"].find({"user_id": user_id, "state": 1}, {"_id": 0, "state": 0})
+        pipeline = [
+            {"$match": {"user_id": user_id, "state": 1}},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
+            {"$project": {"_id": 0, "state": 0}}
+        ]
+        cursor = manage.client["message"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         return response(data=data_list)
     except Exception as e:
@@ -464,15 +478,15 @@ def get_user_data_statistic():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_user_paymethod_show():
-    """我的账户提现方式展示"""
+def get_user_withdrawal_bank():
+    """提现银行"""
     try:
         # 用户id
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         # 查询数据
-        cursor = manage.client["support_method"].find({"state": 1}, {"_id": 0, "channel": 1, "ico_url": 1, "fees": 1})
+        cursor = manage.client["bank"].find({"state": 1}, {"_id": 0, "uid": 1, "name": 1})
         data_list = [doc for doc in cursor]
         if not data_list:
             return response(msg="Internal Server Error: Lack of data in database.", code=1, status=500)
@@ -501,7 +515,7 @@ def get_user_balance():
         data["balance"] = doc.get("balance")
         doc = manage.client["user_statistical"].find_one({"user_id": user_id, "date": yesterday_stamp}, {"_id": 0, "amount": 1})
         data["amount"] = doc.get("amount") if doc else float(0)
-        cursor = manage.client["support_method"].find({})
+        cursor = manage.client["bank"].find({})
         fees = [doc for doc in cursor][0]["fees"]
         data["fees"] = int(fees * 100)
         data["lock"] = float(200)
@@ -518,12 +532,11 @@ def post_withdrawal_apply():
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         # 参数
-        channel = request.json.get("channel")
+        wd_way = request.json.get("wd_way")
+        bank_id = request.json.get("bank_id")
         trade_name = request.json.get("trade_name") # 提现账户名
         trade_id = request.json.get("trade_id") # 提现账号
         amount = request.json.get("amount")
-        if not channel:
-            return response(msg="Bad Request: Miss params: 'channel'.", code=1, status=400)
         if not trade_name:
             return response(msg="请填写账户名", code=1)
         if not trade_id:
@@ -537,8 +550,14 @@ def post_withdrawal_apply():
         if amount > balance:
             return response(msg="余额不足", code=1)
         order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        if not wd_way:
+            doc = manage.client["bank"].find_one({"uid": bank_id})
+            if not doc:
+                return response(msg="Bad Request: Params 'bank_id' is error.", code=1, status=400)
+        if wd_way and wd_way != "支付宝":
+            return response(msg="Bad Request: Params 'wd_way' is error.", code=1, status=400)
         condition = {
-            "order": order, "channel": channel, "user_id": user_id, "trade_name": trade_name, "trade_id": trade_id, "amount": amount, "state": 1,
+            "order": order, "channel": doc["name"] if not wd_way else wd_way, "user_id": user_id, "trade_name": trade_name, "trade_id": trade_id, "amount": amount, "state": 1,
             "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
         }
         manage.client["withdrawal_records"].insert(condition)
@@ -736,6 +755,15 @@ def get_user_goods_list(domain=constant.DOMAIN):
     try:
         # 参数
         user_id = g.user_data["user_id"]
+        page = request.args.get("page")
+        num = request.args.get("num")
+        type = request.args.get("type") #添加add 编辑editor
+        if not num:
+            return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
+        if not page:
+            return response(msg="Bad Request: Miss params: 'page'.", code=1, status=400)
+        if int(page) < 1 or int(num) < 1:
+            return response(msg="Bad Request: Params 'page' or 'num' is erroe.", code=1, status=400)
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
         # 参数
@@ -743,19 +771,21 @@ def get_user_goods_list(domain=constant.DOMAIN):
         # 查询
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
-            {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": {"$uid", "$$works_id"}}}}], "as": "works_item"}},
+            {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"works_info": {"$arrayElemAt": ["$works_item", 0]}}},
             {"$addFields": {"title": "$works_info.title", "pic_id": "$works_info.pic_id", "price_id": "$works_info.price_id", "lable": "$works_info.lable"}},
             {"$match": {"$or": [{"title" if content != "default" else "null": content if content != "default" else None}, 
                                 {"label" if content != "default" else "null": content if content != "default" else None}]}},
             {"$unset": ["works_item", "works_info"]},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_item"}},
-            {"$lookup": {"from": "price", "let": {"price_id": "$price_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$price_id"]}}}], "as": "price_temp_item"}},
+            {"$lookup": {"from": "price", "let": {"price_id": "$price_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$price_id"]}, "format": "扩大授权"}}], "as": "price_temp_item"}},
             {"$addFields": {"spec_list": {"$map": {"input": "$price_temp_item", "as": "item", "in": {"pic_url": {"$concat": [domain, "$$item.pic_url"]}, "format": "$$item.format"}}}}}, 
-            {"$addFields": {"pic_info": {"$arrayElemAt": ["$pic_item", 0]}}},
-            {"$addFields": {"thumb_url": "$pic_item.thumb_url"}},
-            {"$unset": ["pic_item", "pic_info", "price_temp_item"]},
-            {"$project": {"_id": 0, "thumb_url": {"$concat": [domain, "thumb_url"]}, "title": 1, "works_id": 1, "spec_list": 1}}
+            {"$addFields": {"pic_info": {"$arrayElemAt": ["$pic_item", 0]}, "spec_info": {"$arrayElemAt": ["$spec_list", 0]}}},
+            {"$addFields": {"thumb_url": "$pic_info.thumb_url", "pic_url": "$spec_info.pic_url"}},
+            {"$unset": ["pic_item", "pic_info", "price_temp_item", "spec_list", "spec_info"]},
+            {"$project": {"_id": 0, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "title": 1, "works_id": 1, "pic_url": 1, "uid": 1}}
         ]
         cursor = manage.client["goods"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -765,8 +795,33 @@ def get_user_goods_list(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def get_goods_detail():
-    """购买图片详情页"""
+def put_user_goods_state(length_max=20):
+    """
+    删除图片商品接口
+    """
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        pic_id_list = request.json.get("pic_id_list") # array
+        if not pic_id_list:
+            return response(msg="Bad Request: Miss param 'pic_id_list'.", code=1, status=400)
+        doc = manage.client["goods"].update({"uid": {"$in": pic_id_list}}, {"$set": {"state": -1}}, multi=True)
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Param 'pic_id_list' is error.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_goods_detail(domain=constant.DOMAIN):
+    """
+    购买图片详情页
+    :param domain: 域名
+    """
+    data = {}
     try:
         # 用户uid
         user_id = g.user_data["user_id"]
@@ -777,7 +832,7 @@ def get_goods_detail():
         # 查询数据
         # 图片详情信息
         pipeline = [
-            {"$match": {"pic_id": uid, "type": {"$in": ["tp", "tj"]}}},
+            {"$match": {"uid": uid, "type": {"$in": ["tp", "tj"]}}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
@@ -799,10 +854,10 @@ def get_goods_detail():
         if pic_data[0].get("price_id"):
             pipeline = [
                 {"$match": {"uid": pic_data[0].get("price_id")}},
-                {"$lookup": {"from": "goods", "let": {"works_id": "$works_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$works_id", "$$works_id"]}}}], "as": "goods_item"}},
+                {"$lookup": {"from": "goods", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$eq": ["$pic_id", "$$pic_id"]}}}], "as": "goods_item"}},
                 {"$addFields": {"goods_info": {"$arrayElemAt": ["$goods_item", 0]}}},
                 {"$addFields": {"spec": "$goods_info.spec"}},
-                {"$project": {"_id": 0, "pic_url": {"$cond": {"if": {"format": {"$in": "$spec"}}, "then": "$pic_url", "else": None}}, "format": 1, "height": 1, "width": 1, "price": 1, "currency": 1}}
+                {"$project": {"_id": 0, "pic_url": {"$cond": {"if": {"$in": ["$format", "$spec"]}, "then": "$pic_url", "else": None}}, "format": 1, "height": 1, "width": 1, "price": 1, "currency": 1}}
             ]
             cursor = manage.client["price"].aggregate(pipeline)
             price_data = [doc for doc in cursor]
