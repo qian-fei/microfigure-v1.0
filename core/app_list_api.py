@@ -172,7 +172,7 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=
         today_timestamp = int(time.mktime(today.timetuple())) * 1000
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 推荐作品
-        condition = {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}
+        condition = {"type": "yj", "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}
         if label != "default": condition.update({'label': label})
         cursor = manage.client["works"].find(condition, {"_id": 0}).skip(int(page) - 1).limit(1)
         doc = [doc for doc in cursor]
@@ -319,7 +319,7 @@ def get_label_kw(kw_max=5, label_max=5):
             data["hot_kw"] = hot_kw
         # 标签栏目
         # 查询条件
-        doc = manage.client["custom_label"].find_one({"user_id": user_id})
+        doc = manage.client["custom_label"].find_one({"user_id": user_id, "type":  type, "state": 1}, {"_id": 0})
         if not doc:
             pipeline = [
                 {"$match": {"priority": {"$gt": 0}, "state": 1, "type": type}},
@@ -330,7 +330,6 @@ def get_label_kw(kw_max=5, label_max=5):
             cursor = manage.client["label"].aggregate(pipeline)
             label = [doc["label"] for doc in cursor]
         else:
-            doc = manage.client["custom_label"].find_one({"user_id": user_id, "type": type, "state": 1}, {"_id": 0})
             label = doc.get("label")
         data["label"] = label
         return response(data=data)
