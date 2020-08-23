@@ -174,7 +174,7 @@ def post_car_generate_order(domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "create_time": 1}},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "create_time": 1}},
             {"$group": {"_id": {"order": "$order", "balance": "$balance", "create_time": "$create_time", "state": "$state"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
             {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "balance": "$_id.balance", "state": "$_id.state", "works_item": 1, "total_amount": 1}},
             {"$sort": SON([("create_time", -1)])}

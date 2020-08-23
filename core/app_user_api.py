@@ -543,7 +543,9 @@ def get_user_data_statistic():
         ]
         cursor = manage.client["user_statistical"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        return response(data=data_list[0])
+        if not data_list:
+            data = {"browse_num": 0, "comment_num": 0, "amount_num": 0, "share_num": 0, "like_num": 0, "sale_num": 0}
+        return response(data=data_list[0] if data_list else data)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
