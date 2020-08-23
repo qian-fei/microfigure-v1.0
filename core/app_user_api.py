@@ -423,6 +423,77 @@ def put_alter_userinfo(nick_max=10, label_max=20, sign_max=60):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
+def post_userinfo_alter_pwd():
+    """个人中心-更改密码"""
+    try:
+        # 用户登录状态判断
+        # uid = g.user_data["user_id"]
+        # if not uid:
+        #     return response(msg="Bad Request: Token expired.", code=1, status=401)
+
+        # 获取参数
+        mobile = request.json.get("mobile")
+        sms_code = request.json.get("sms_code")
+        password = request.json.get("password")
+
+        # 判断参数是否为空
+        if not password:
+            return response(msg="请输入密码", code=1)
+        # 校验短信码
+        doc = manage.client["verify"].find_one({"uid": mobile, "type": "sms", "code": sms_code})
+        if not doc:
+            return response(msg="短信码或手机号错误", code=1)
+        # 用户密码加密
+        password_b64 = base64.b64encode(password.encode()).decode()
+
+        # 更新密码
+        manage.client["user"].update_one({"mobile": mobile}, {"$set": {"password": password_b64}})
+        return response(status=200)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
+
+
+def post_userinfo_alter_mobile():
+    """个人中心-更换手机"""
+    try:
+        # 用户登录状态判断
+        uid = g.user_data["user_id"]
+        if not uid:
+            return response(msg="Bad Request: Token expired.", code=1, status=401)
+
+        # 获取参数
+        new_mobile = request.json.get("new_mobile")
+        sms_code = request.json.get("sms_code")
+        # 判断参数是否为空
+        if not new_mobile:
+            return response(msg="请输入手机号码", code=1)
+        # 校验短信码
+        doc = manage.client["verify"].find_one({"uid": new_mobile, "type": "sms", "code": sms_code})
+        if not doc:
+            return response(msg="短信码或手机号错误", code=1)
+
+        # 判断手机号长度
+        if len(new_mobile) != 11:
+            return response(msg="请输入正确的手机号", code=1)
+
+        # 不能重复换绑同一个手机号
+        if new_mobile == doc["mobile"]:
+            return response(msg="不能换绑原手机号", code=1)
+
+        # 判断手机格式
+        if not re.match(r"1[35678]\d{9}", new_mobile):
+            return response(msg="请输入正确的手机号", code=1)
+
+        # 更新手机号
+        client["user"].update_one({"uid": uid}, {"$set": {"mobile": new_mobile}})
+
+        return response(status=401)
+    except Exception as e:
+        log.error(e)
+        return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
+
+
 def get_user_sales_records():
     """销售记录"""
     try:

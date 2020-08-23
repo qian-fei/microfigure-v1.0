@@ -86,7 +86,7 @@ def get_order_detail(domain=constant.DOMAIN):
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
         pipeline = [
-            {"$match": {"user_id": user_id, "state": 1, "order": order}},
+            {"$match": {"user_id": user_id, "order": order}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"balance": "$user_info.balance"}},
@@ -180,7 +180,12 @@ def post_car_generate_order(domain=constant.DOMAIN):
             {"$sort": SON([("create_time", -1)])}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
-        data_list = [doc for doc in cursor]
+        data_list = []
+        for doc in cursor:
+            create_time = doc["create_time"]
+            now_time = int(time.time() * 1000)
+            doc["delta_time"] = (create_time + 1800000 - now_time) // 1000
+            data_list.append(doc)
         return response(data=data_list[0] if data_list else None)
     except Exception as e:
         manage.log.error(e)
@@ -257,7 +262,7 @@ def put_user_order():
         if not order_id:
             return response(msg="Bad Request: Miss params: 'order_id'.", code=1, status=400)
         # 更新
-        doc = manage.client["order"].update({"order": order_id, "user_id": user_id, "state": 1}, {"$set": {"state": 0, "update_time": 1}}, multi=True)
+        doc = manage.client["order"].update({"order": order_id, "user_id": user_id, "state": 1}, {"$set": {"state": -1, "update_time": 1}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
         return response()
@@ -282,31 +287,25 @@ def post_order_payment():
             return response(msg="Bad Request: Params 'pay_method' is error.", code=1, status=400)
         total_amount = 0
         cursor = manage.client["order"].find({"order": order})
+        n = 0
         for doc in cursor:
             total_amount += doc["price"]
+            if n == 0:
+                goods_id = doc["works_id"]
+                n += 1
+        doc = manage.client["user"].find_one({ "uid": user_id})
+        balance = doc.get("balance")
+        # 生成交易信息
+        trade_id = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        condition = {"trade_id": trade_id, "type": "balance" if pay_method == "余额" else ("alipay" if pay_method == "支付宝" else "wxpay"), "trade_amount": total_amount, 
+                     "goods_id": goods_id, "state": 1, "order": order, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+        manage.client["trade"].insert(condition)
         # 余额支付
         if pay_method == "余额":
-            doc = manage.client["user"].find_one({ "uid": user_id})
-            balance = doc.get("balance")
-            if balance < total_amount:
-                # 支付
-                doc = manage.client["user"].find_one({ "uid": user_id}, {"$inc": {"balance": -total_amount}})
-                if doc["n"] == 0:
-                    return response(msg="支付失败", code=1)
-                # 支付完成
-                doc = manage.client["order"].update({"order": order}, {"$set": {"state": 2}}, multi=True)
-                if doc["n"] == 0:
-                    raise Exception("'order' state update failed")
-                # 卖家balance更新
-                doc = manage.client["order"].find({"order": order})
-                data_list = [doc for doc in cursor]
-                works_id = data_list[0]["works_id"]
-                doc = manage.client["works"].find_one({"uid": works_id})
-                seller_id = doc["user_id"]
-                doc = manage.client["user"].update({ "uid": user_id}, {"$inc": {"balance": total_amount}})
-                if doc["n"] == 0:
-                    raise Exception(f"seller '{seller_id}' balance update failed")
-                return response()
+            trade_data = {"trade_id": trade_id, "balance": balance, "trade_amount": total_amount}
+            import json
+            trade_str = json.dumps(trade_data)
+            request_param = trade_str
         # 支付宝支付
         if pay_method == "支付宝":
             alipay = AliPay(order, str(total_amount))
@@ -439,12 +438,17 @@ def post_top_up():
             return response(msg="Bad Request: Miss params: 'total_amount'.", code=1, status=400)
         if total_amount < 0 or type(total_amount) != float:
             return response(msg="Bad Request: Parmas 'total_amount' is error.", code=1, status=400)
-        order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
-        # 创建充值订单
-        condition = {
-            "order": order, "user_id": user_id, "channel": channel, "amount": total_amount, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
-        }
-        manage.client["recharge_records"].insert(condition)
+        # order = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        # # 创建充值订单
+        # condition = {
+        #     "order": order, "user_id": user_id, "channel": channel, "amount": total_amount, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+        # }
+        # manage.client["recharge_records"].insert(condition)
+        # 生成交易id
+        trade_id = str(int(time.time() * 1000)) + str(int(time.clock() * 1000000))
+        condition = {"trade_id": trade_id, "type": "alipay" if channel == "支付宝" else "wxpay", "trade_amount": total_amount, "goods_id": "", "state": 1, "order": "",
+                     "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+        manage.client["trade"].insert(condition)
         # 支付宝支付
         if pay_method == "支付宝":
             alipay = AliPay(order, total_amount)
@@ -503,3 +507,50 @@ def post_top_up_wechat_callback_verify():
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
+
+def get_balance_payment():
+    """余额支付"""
+    try:
+        user_id = g.user_data["user_id"]
+        # 参数
+        trade_id = request.json.get("trade_id")
+        password = request.json.get("password")
+        if not password:
+            return response(msg="Bad Request: Miss params: 'trade_id'.", code=1, status=400)
+        if not password:
+            return response(msg="请输入密码", code=1)
+        # 校验密码
+        password_b64 = base64.b64encode(password.encode()).decode()
+        doc = manage.client["user"].find_one({"uid": user_id, "password": password_b64})
+        if not doc:
+            return response(msg="密码错误", code=1)
+        trade_doc = manage.client["trade"].find_one({"trade_id": trade_id})
+        trade_amount = trade_doc["trade_amount"]
+        order = trade_doc["order"]
+        balance = doc["balance"]
+        # 自己不能购买自己的商品
+        cursor = manage.client["order"].find({"order": order})
+        data_list = [doc for doc in cursor]
+        works_id = data_list[0]["works_id"]
+        doc = manage.client["works"].find_one({"uid": works_id})
+        seller_id = doc["user_id"]
+        if user_id == seller_id:
+            return response(msg="自己不能购买自己的商品", code=1)
+        if balance < trade_amount:
+            return response(msg="余额不足", code=1)
+        # 支付
+        doc = manage.client["user"].update({ "uid": user_id}, {"$inc": {"balance": -trade_amount}})
+        if doc["n"] == 0:
+            return response(msg="支付失败", code=1)
+        # 支付完成
+        doc = manage.client["order"].update({"order": order}, {"$set": {"state": 2}}, multi=True)
+        if doc["n"] == 0:
+            raise Exception("'order' state update failed")
+        # 卖家balance更新
+        doc = manage.client["user"].update({ "uid": seller_id}, {"$inc": {"balance": trade_amount}})
+        if doc["n"] == 0:
+            raise Exception(f"seller '{seller_id}' balance update failed")
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

@@ -316,8 +316,8 @@ def post_oauth_bind(nick_limit=8):
     """
     try:
         # 获取参数
-        mobile = flask.request.json.get("mobile", None)
-        oauth = flask.request.json.get("oauth", None)
+        mobile = request.json.get("mobile", None)
+        oauth = request.json.get("oauth", None)
         # 判断参数是否为空
         if not mobile:
             return response(msg="请输入手机号", code=1)
@@ -391,14 +391,14 @@ def post_oauth_login():
         if not any([doc1, doc2]):
             return response(data=1, msg="请绑定账号", code=1)
 
+        doc = doc1 or doc2
         token = doc["token"]
         # 校验token有效期
         sign = check_token(doc)
         if sign: token = sign
 
         # 记录登录时间
-        condition = {"uid": doc1["uid"] if doc1 else doc2["uid"]}, {"$set": {"login_time": int(time.time() * 1000)}}
-        manage.client["user"].update_one(condition)
+        manage.client["user"].update_one({"uid": doc1["uid"] if doc1 else doc2["uid"]}, {"$set": {"login_time": int(time.time() * 1000)}})
         resp = response()
         resp.headers["token"] = token
         return resp
@@ -416,6 +416,32 @@ def get_user_logout():
             return response(msg="Bad Request: User not logged in.", code=1)
         return response(msg="退出成功")
 
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
+
+
+def get_forgot_password():
+    """忘记密码"""
+    try:
+        # 获取参数
+        mobile = request.json.get("mobile")
+        sms_code = request.json.get("sms_code")
+        password = request.json.get("password")
+
+        # 判断参数是否为空
+        if not password:
+            return response(msg="请输入密码", code=1)
+        # 校验短信码
+        doc = manage.client["verify"].find_one({"uid": mobile, "type": "sms", "code": sms_code})
+        if not doc:
+            return response(msg="短信码或手机号错误", code=1)
+        # 用户密码加密
+        password_b64 = base64.b64encode(password.encode()).decode()
+
+        # 更新密码
+        client["user"].update_one({"uid": uid}, {"$set": {"password": password_b64}})
+        return response()
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)

@@ -759,8 +759,9 @@ GET
 |   返回字段    | 必须 | 字段类型 | 字段说明 | 备注 |
 | :-----------: | :--: | :------: | :------- | ---- |
 |      uid      |  是  |  String  | 作品id   |      |
-|   top_title   |  是  |  String  | 标题     |      |
-| top_cover_url |  是  |  String  | 封面     |      |
+|     title     |  是  |  String  | 作品标题 |      |
+|   top_title   |  是  |  String  | 置顶标题 |      |
+| top_cover_url |  是  |  String  | 置顶封面 |      |
 |  browse_num   |  是  | Integer  | 浏览数   |      |
 |  comment_num  |  是  | Integer  | 评论数   |      |
 |   like_num    |  是  | Integer  | 点赞数   |      |
@@ -949,6 +950,91 @@ PUT
 |   top_title   |  否  |  String  | 置顶影集标题                                                 |
 | top_cover_url |  否  |  String  | 置顶影集封面                                                 |
 |   video_id    |  否  |  String  | 被添加影集id                                                 |
+
+返回字段：无
+
+返回示例: 
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 15.文档管理列表
+
+请求URL：
+
+```
+/api/v1/admin/document/list
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+文档管理列表。请求头需要携带module_id和permission_id
+```
+
+请求参数：无
+
+返回字段：
+
+|  字段   |  类型  |  说明  |                             备注                             |
+| :-----: | :----: | :----: | :----------------------------------------------------------: |
+|   uid   | String | 文档id |                           唯一索引                           |
+| content | String |  内容  |                                                              |
+|  type   | String |  类型  | user_agreement用户协议，authorized_contract授权合同，product_contract物产授权，portrait_agreement肖像协议 |
+
+返回示例: 
+
+```json
+{
+    "data": [{
+        	"uid": "123462",
+        	"content": "我是祖国的花朵",
+        	"type": "user_agreement"
+    	},
+        ...
+    ],
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 16.文档编辑
+
+请求URL：
+
+```
+/api/v1/admin/document/state
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+文档管理列表。请求头需要携带module_id和permission_id
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 |
+| :------: | :--: | :------: | :------- |
+|   uid    |  是  |  String  | 唯一id   |
+| content  |  是  |  String  | 内容     |
 
 返回字段：无
 
@@ -3170,10 +3256,164 @@ PUT
 
 |    请求参数     | 必须 | 参数类型 | 参数说明 | 备注                                                |
 | :-------------: | :--: | :------: | :------- | --------------------------------------------------- |
-|       uid       |  是  |    是    | 昵称id   |                                                     |
-|      nick       |  是  |    是    | 昵称     |                                                     |
+|       uid       |  是  |  String  | 昵称id   |                                                     |
+|      nick       |  是  |  String  | 昵称     |                                                     |
 |      desc       |  是  |  String  | 描述     |                                                     |
 | permission_list |  是  |  Array   | 权限列表 | [{"module_id": "001", "permission_id": "001"}, ...] |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+  "data": null,
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+##### 14.系统备份
+
+请求URL：
+
+```
+/api/v1/admin/system/backup
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+根据请求参数,系统备份
+```
+
+请求参数:  
+
+|  请求参数   | 必须 | 参数类型 | 参数说明 | 备注 |
+| :---------: | :--: | :------: | :------- | ---- |
+|    name     |  是  |  String  | 备份名称 |      |
+| instruction |  是  |  String  | 备份说明 |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+  "data": null,
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+##### 15.系统备份还原
+
+请求URL：
+
+```
+/api/v1/admin/system/reduction
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+根据请求参数,系统备份还原
+```
+
+请求参数:  
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| :------: | :--: | :------: | :------- | ---- |
+|   uid    |  是  |  String  | 唯一id   |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+  "data": null,
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+##### 16.系统备份列表接口
+
+请求URL：
+
+```
+/api/v1/admin/backup/list
+```
+
+请求方式：
+
+```
+GET
+```
+
+接口说明：
+
+```
+根据请求参数,系统备份列表
+```
+
+请求参数:  
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| :------: | :--: | :------: | :------- | ---- |
+|   page   |  是  | Integer  | 页码     |      |
+|   num    |  是  | Integer  | 页数     |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+  "data": null,
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+##### 17.备份删除接口
+
+请求URL：
+
+```
+/api/v1/admin/backup/state
+```
+
+请求方式：
+
+```
+DELETE
+```
+
+接口说明：
+
+```
+根据请求参数,删除备份。
+```
+
+请求参数:  
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| :------: | :--: | :------: | :------- | ---- |
+|   uid    |  是  |  String  | 备份id   |      |
 
 返回字段：无
 

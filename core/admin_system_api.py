@@ -390,6 +390,57 @@ def put_add_permissions_role_editor(nick_length_max=32, desc_length_max=128):
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
+def post_system_backup_list():
+    """备份列表"""
+    data = {}
+    try:
+        page = request.args.get("page")
+        num = request.args.get("num")
+        if not num:
+            return response(msg="Bad Request: Miss param 'num'.", code=1, status=400)
+        if int(num) < 1 or int(page) < 1:
+            return response(msg="Bad Request: Param 'page' or 'num' is error.", code=1, status=400)
+        pipeline = [
+            {"$match": {"state": 1}},
+            {"$skip": (int(page) - 1) * int(num)},
+            {"$limit": int(num)},
+            {"$group": {"_id": {"uid": "$uid", "name": "$name", "instruction": "$instruction", "create_time": "$create_time"}}},
+            {"$project": {"_id": 0, "uid": "$uid", "name": "$_id.name", "instruction": "$_id.instruction", "create_time": "$_id.create_time"}}
+        ]
+        cursor = manage.client["backup"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        pipeline = [
+            {"$match": {"state": 1}},
+            {"$group": {"_id": {"uid": "$uid", "name": "$name", "instruction": "$instruction", "create_time": "$create_time"}}},
+            {"$count": "count"}
+        ]
+        cursor = manage.client["backup"].aggregate(pipeline)
+        temp_list = [doc for doc in cursor]
+        count = temp_list[0]["count"] if temp_list else 0
+        data["list"] = data_list
+        data["count"] = count
+        return response(data=data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def delete_backup_state():
+    """删除备份记录"""
+    try:
+        # 参数
+        uid = request.json.get("uid")
+        if not uid:
+            return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
+        doc = manage.client["backup"].update({"uid": uid}, {"$set": {"state": -1}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Params 'uid' is error.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
 def post_system_backup():
     """系统备份"""
     try:
@@ -404,6 +455,8 @@ def post_system_backup():
         备份内容：角色权限、平台定价、可选栏目、热搜词、文档管理、评论敏感词
         """
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path_list = []
+        timestamp = int(time.time() * 1000)
         # 角色权限备份
         cursor_module = manage.client["module"].find({})
         module_list = list(cursor_module)
@@ -411,27 +464,85 @@ def post_system_backup():
         permission_list = list(cursor_permission)
         cursor_role = manage.client["role"].find({})
         role_list = list(cursor_role)
-        with open(f"{BASE_DIR}/statics/files/module_{int(time.time() * 1000)}.json", "wb") as f:
+        module_path = f"/statics/files/backup/module/"
+        if not os.path.exists(BASE_DIR + module_path):
+            os.makedirs(BASE_DIR + module_path)
+        permission_path = f"/statics/files/backup/permission/"
+        if not os.path.exists(BASE_DIR + permission_path):
+            os.makedirs(BASE_DIR + permission_path)
+        role_path = f"/statics/files/backup/role/"
+        if not os.path.exists(BASE_DIR + role_path):
+            os.makedirs(BASE_DIR + role_path)
+        path_list += [module_path + f"{timestamp}.json", permission_path + f"{timestamp}.json", role_path + f"{timestamp}.json"]
+        with open(BASE_DIR + module_path + f"{timestamp}.json", "wb") as f:
             f.write(str(module_list).encode("utf-8"))
-        with open(f"{BASE_DIR}/statics/files/permission_{int(time.time() * 1000)}.json", "wb") as f:
+        with open(BASE_DIR + permission_path + f"{timestamp}.json", "wb") as f:
             f.write(str(permission_list).encode("utf-8"))
-        with open(f"{BASE_DIR}/statics/files/role_{int(time.time() * 1000)}.json", "wb") as f:
+        with open(BASE_DIR + role_path + f"{timestamp}.json", "wb") as f:
             f.write(str(role_list).encode("utf-8"))
         # 平台定价
-        cursor_price = manage.client["module"].find({"uid": "001"})
+        cursor_price = manage.client["price"].find({"uid": "001"})
         price_list = list(cursor_price)
-        with open(f"{BASE_DIR}/statics/files/price_{int(time.time() * 1000)}.json", "wb") as f:
+        price_path = f"/statics/files/backup/price/"
+        if not os.path.exists(BASE_DIR + price_path):
+            os.makedirs(BASE_DIR + price_path)
+        path_list.append(price_path + f"{timestamp}.json")
+        with open(BASE_DIR + price_path + f"{timestamp}.json", "wb") as f:
             f.write(str(price_list).encode("utf-8"))
         # 可选栏目
         cursor_label = manage.client["label"].find({})
         label_list = list(cursor_label)
-        with open(f"{BASE_DIR}/statics/files/label_{int(time.time() * 1000)}.json", "wb") as f:
+        label_path = f"/statics/files/backup/label/"
+        if not os.path.exists(BASE_DIR + label_path):
+            os.makedirs(BASE_DIR + label_path)
+        path_list.append(label_path + f"{timestamp}.json")
+        with open(BASE_DIR + label_path + f"{timestamp}.json", "wb") as f:
             f.write(str(label_list).encode("utf-8"))
         # 敏感词
         cursor_bad = manage.client["bad"].find({})
         bad_list = list(cursor_bad)
-        with open(f"{BASE_DIR}/statics/files/bad_{int(time.time() * 1000)}.json", "wb") as f:
+        bad_path = f"/statics/files/backup/bad/"
+        if not os.path.exists(BASE_DIR + bad_path):
+            os.makedirs(BASE_DIR + bad_path)
+        path_list.append(bad_path + f"{timestamp}.json")
+        with open(BASE_DIR + bad_path + f"{timestamp}.json", "wb") as f:
             f.write(str(bad_list).encode("utf-8"))
+        # 入库
+        uid = base64.b64encode(os.urandom(16)).decode()
+        condition = []
+        for i in path_list:
+            obj = {"uid": uid, "name": name, "instruction": instruction, "file_path": i, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition.append(obj)
+        manage.client["backup"].insert_many(condition)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_system_backup_reduction():
+    """备份恢复"""
+    try:
+        from bson.objectid import ObjectId
+        uid = request.json.get("uid")
+        if not uid:
+            return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
+        cursor = manage.client["backup"].find({"uid": uid})
+        data_list = [doc["file_path"] for doc in cursor]
+        if not data_list:
+            return response(msg="Bad Request: Params 'uid' is error.", code=1, status=400)
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for i in data_list:
+            with open(BASE_DIR + i, "rb") as f:
+                temp = i.split("/")[4]
+                data_list = eval(f.read().decode("utf-8"))
+            if temp == "price":
+                for p in data_list:
+                    manage.client["price"].update({"uid": "001", "format": p["format"]}, 
+                                                  {"$set": {"price": p["price"], "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}})
+            else:
+                manage.client[f"{temp}"].drop()
+                manage.client[f"{temp}"].insert_many(data_list)
         return response()
     except Exception as e:
         manage.log.error(e)

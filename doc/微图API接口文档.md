@@ -4758,6 +4758,85 @@ PUT
 }
 ```
 
+##### 55.个人中心修改密码接口
+
+请求URL：
+
+```
+/api/v1/user/alter/password
+```
+
+请求方式：
+
+```
+PUT
+```
+
+接口说明：
+
+```
+根据请求参数，修改用户密码
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 |
+| :------: | :--: | :------: | :------- |
+|  mobile  |  是  |  String  | 手机号   |
+| sms_code |  是  |  String  | 短信码   |
+| password |  是  |  String  | 新密码   |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 56.个人中心修改手机
+
+请求URL：
+
+```
+/api/v1/user/alter/mobile
+```
+
+请求方式：
+
+```
+PUT
+```
+
+接口说明：
+
+```
+根据请求参数，修改用户手机
+```
+
+请求参数：
+
+|  请求参数  | 必须 | 参数类型 | 参数说明 |
+| :--------: | :--: | :------: | :------- |
+| new_mobile |  是  |  String  | 新手机号 |
+|  sms_code  |  是  |  String  | 短信码   |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
 ##### 
 
 #### 四、作品制作
@@ -5797,3 +5876,84 @@ POST
 }
 ```
 
+##### 10.余额支付
+
+请求URL：
+
+```
+/api/v1/balance/pay
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+余额支付
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注 |
+| -------- | ---- | -------- | -------- | ---- |
+| trade_id | 是   | String   | 交易id   |      |
+| password | 是   | String   | 密码     |      |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 11.余额充值
+
+##### 8.订单支付
+
+请求URL：
+
+```
+/api/v1/balance/recharge
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+订单支付
+```
+
+请求参数：
+
+| 请求参数     | 必须 | 参数类型 | 参数说明 | 备注             |
+| ------------ | ---- | -------- | -------- | ---------------- |
+| channel      | 是   | String   | 渠道     | 余额 支付宝 微信 |
+| total_amount | 是   | Float    | 订单总额 |                  |
+
+返回字段：
+
+返回示例：
+
+```json
+{
+    "data": 'app_id=2015052600090779&biz_content={"timeout_express":"30m","product_code":"QUICK_MSECURITY_PAY","total_amount":"0.01","subject":"1","body":"我是测试数据","out_trade_no":"IQJZSRC1YMQB5HU"}&charset=utf-8&format=json&method=alipay.trade.app.pay&notify_url=http://domain.merchant.com/payment_notify&sign_type=RSA2&timestamp=2016-08-25 20:26:31&version=1.0&sign=cYmuUnKi5QdBsoZEAbMXVMmRWjsuUj+y48A2DvWAVVBuYkiBj13CFDHu2vZQvmOfkjE0YqCUQE04kqm9Xg3tIX8tPeIGIFtsIyp/M45w1ZsDOiduBbduGfRo1XRsvAyVAv2hCrBLLrDI5Vi7uZZ77Lo5J0PpUUWwyQGt0M4cj8g=', // 支付宝 微信为响应的xml字符串
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 

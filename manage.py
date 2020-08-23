@@ -415,6 +415,19 @@ def user_info_alter():
     return app_user_api.put_alter_userinfo()
 
 
+@app.route(f"{url}/user/alter/password", methods=["PUT"])
+def user_info_alter_password():
+    """修改密码接口"""
+    return app_user_api.post_userinfo_alter_pwd()
+
+
+@app.route(f"{url}/user/alter/mobile", methods=["PUT"])
+@auth_user_login
+def user_info_alter_mobile():
+    """修改手机接口"""
+    return app_user_api.post_userinfo_alter_mobile()
+
+
 @app.route(f"{url}/works/like", methods=["POST"])
 @auth_user_login
 def works_like():
@@ -918,6 +931,13 @@ def app_callback():
     return app_order_api.post_app_callback()
 
 
+@app.route(f"{url}/balance/pay", methods=["POST"])
+@auth_user_login
+def balance_pay():
+    """余额支付接口"""
+    return app_order_api.get_balance_payment()
+
+
 @app.route(f"{url}/balance/recharge", methods=["POST"])
 @auth_user_login
 def balance_recharge():
@@ -1111,6 +1131,22 @@ def admin_front_video_choose():
 def admin_front_video_add():
     """后台前台置添加置顶影集接口"""
     return admin_front_api.put_video_works()
+
+
+@app.route(f"{url}/admin/document/list", methods=["GET"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_document_list():
+    """后台前台置文档管理列表接口"""
+    return admin_front_api.get_agreement_list()
+
+
+@app.route(f"{url}/admin/document/state", methods=["PUT"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_document_state():
+    """后台前台置文档管理删除接口"""
+    return admin_front_api.put_agreement_list()
 
 
 @app.route(f"{url}/admin/material/pic/list", methods=["GET"])
@@ -1678,6 +1714,34 @@ def admin_finance_recharge_export():
 def admin_finance_withdrawal_audit_export():
     """后台提现审核记录导出接口"""
     return admin_finance_api.get_withdrawal_records_audit_export()
+
+
+@app.route(f"{url}/admin/backup/list", methods=["GET"])
+@auth_admin_login
+def admin_system_backup_list():
+    """系统备份列表接口"""
+    return admin_system_api.post_system_backup_list()
+
+
+@app.route(f"{url}/admin/backup/state", methods=["DELETE"])
+@auth_admin_login
+def admin_system_backup_state():
+    """系统备份删除接口"""
+    return admin_system_api.post_system_backup_list()
+
+
+@app.route(f"{url}/admin/system/backup", methods=["POST"])
+@auth_admin_login
+def admin_system_backup():
+    """系统备份接口"""
+    return admin_system_api.post_system_backup()
+
+
+@app.route(f"{url}/admin/system/reduction", methods=["POST"])
+@auth_admin_login
+def admin_system_reduction():
+    """系统还原接口"""
+    return admin_system_api.post_system_backup_reduction()
 
 
 @app.route(f"{url}/test", methods=["GET", "POST"])

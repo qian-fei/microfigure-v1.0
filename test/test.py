@@ -323,17 +323,21 @@ temp = {
 
 # # with open("demo.json", "wb") as f:
 # #     f.write(str(lst).encode("utf-8"))
+# import json
+# with open("demo.json", "rb") as f:
+#     cont = f.read()
+
+
+# # # # rest = eval(cont.decode("utf-8"))
+# # # temp = cont.decode("utf-8")
+# # # print(temp, type(temp))
+# g = cont.decode("utf-8")
+# print(g, type(g))
+# rest = json.loads(str(g))
+# print(rest, type(rest))
+# for doc in rest:
+#     print(doc)\
+
+trade_data = {"trade_id": 1, "balance": 3, "trade_amount": 3}
 import json
-with open("demo.json", "rb") as f:
-    cont = f.read()
-
-
-# # # rest = eval(cont.decode("utf-8"))
-# # temp = cont.decode("utf-8")
-# # print(temp, type(temp))
-g = cont.decode("utf-8")
-print(g, type(g))
-rest = json.loads(str(g))
-print(rest, type(rest))
-for doc in rest:
-    print(doc)
+print(json.dumps(trade_data))

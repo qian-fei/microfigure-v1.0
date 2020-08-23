@@ -270,7 +270,8 @@ def get_video_top_list(domain=constant.DOMAIN):
     try:
         pipeline = [
             {"$match": {"type": "yj", "order": {"$ne": None}}},
-            {"$project": {"_id": 0, "uid": 1, "top_title": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "update_time": 1, "order": 1}},
+            {"$project": {"_id": 0, "uid": 1, "top_title": 1, "browse_num": 1, "comment_num": 1, "like_num": 1, "share_num": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, 
+                          "update_time": 1, "order": 1, "title": 1}},
             {"$sort": SON([("order", -1)])}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -402,6 +403,36 @@ def put_video_works(limit=20, domain=constant.DOMAIN):
                 manage.client["works"].update({"uid": video_id}, {"$set": video_info})
             else:
                 manage.client["works"].update({"uid": works_id}, {"$set": video_info})
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_agreement_list():
+    """文档管理"""
+    try:
+        cursor = manage.client["document"].find({"state": 1}, {"_id": 0, "type": 1, "content": 1})
+        data_list = [doc for doc in cursor]
+        return response(data=data_list)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def put_agreement_list():
+    """编辑文档"""
+    try:
+        # 参数
+        uid = request.json.get("uid")
+        content = request.json.get("content")
+        if not content:
+            return response(msg="Bad Request: Miss params: 'content'", code=1, status=400)
+        if not uid:
+            return response(msg="Bad Request: Miss params: 'uid'", code=1, status=400)
+        doc = manage.client["document"].update({"uid": uid}, {"$set": {"content": content}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Param 'uid' is error.", code=1, status=400)
         return response()
     except Exception as e:
         manage.log.error(e)
