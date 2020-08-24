@@ -105,7 +105,7 @@ def user_works_api(user_id, page, num, domain=constant.DOMAIN):
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
             {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}}}], "as": "like_item"}},
             {"$lookup": {"from": "browse_records", "let": {"works_id": "$u id", "user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]},
                                                                                                                                                     {"$eq": ["$user_id", user_id]}]}}}], "as": "browse_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
@@ -810,7 +810,7 @@ def get_user_like_history(domain=constant.DOMAIN):
                             "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "title": "$works_info.title"}},
             {"$unset": ["user_info", "user_item", "works_item"]},
             {"$match": {"is_like": True}},
-            {"$project": {"_id": 0, "nick": 1, "is_like": 1, "like_num": 1, "head_img_url": 1, "title": 1}}
+            {"$project": {"_id": 0, "nick": 1, "is_like": 1, "like_num": 1, "head_img_url": 1, "title": 1, "uid": 1}}
         ]
         cursor = manage.client["comment"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -853,15 +853,32 @@ def get_user_goods_list(domain=constant.DOMAIN):
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_item"}},
-            {"$lookup": {"from": "price", "let": {"price_id": "$price_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$price_id"]}, "format": "扩大授权"}}], "as": "price_temp_item"}},
+            {"$lookup": {"from": "price", "let": {"price_id": "$price_id", "spec": "$spec"}, 
+                         "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$uid", "$$price_id"]}, {"$in": ["$format", "$$spec"]}]}}}], "as": "price_temp_item"}},
             {"$addFields": {"spec_list": {"$map": {"input": "$price_temp_item", "as": "item", "in": {"pic_url": {"$concat": [domain, "$$item.pic_url"]}, "format": "$$item.format"}}}}}, 
-            {"$addFields": {"pic_info": {"$arrayElemAt": ["$pic_item", 0]}, "spec_info": {"$arrayElemAt": ["$spec_list", 0]}}},
-            {"$addFields": {"thumb_url": "$pic_info.thumb_url", "pic_url": "$spec_info.pic_url"}},
-            {"$unset": ["pic_item", "pic_info", "price_temp_item", "spec_list", "spec_info"]},
-            {"$project": {"_id": 0, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "title": 1, "works_id": 1, "pic_url": 1, "uid": 1}}
+            {"$addFields": {"pic_info": {"$arrayElemAt": ["$pic_item", 0]}}},
+            {"$addFields": {"thumb_url": "$pic_info.thumb_url"}},
+            {"$unset": ["pic_item", "pic_info", "price_temp_item"]},
+            {"$project": {"_id": 0, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "title": 1, "works_id": 1, "spec_list": 1, "uid": 1}}
         ]
         cursor = manage.client["goods"].aggregate(pipeline)
-        data_list = [doc for doc in cursor]
+        data_list = []
+        for doc in cursor:
+            temp = {}
+            for i in doc["spec_list"]:
+                if i["format"] in temp:
+                    continue
+                temp[i["format"]] = i["pic_url"]
+            if "扩大授权" in temp:
+                doc["pic_url"] = temp["扩大授权"]
+            elif "L" in temp:
+                doc["pic_url"] = temp["L"]
+            elif "M" in temp:
+                doc["pic_url"] = temp["M"]
+            else:
+                doc["pic_url"] = i["pic_url"]
+            doc.pop("spec_list")
+            data_list.append(doc)
         return response(data=data_list if data_list else [])
     except Exception as e:
         manage.log.error(e)
@@ -971,6 +988,7 @@ def get_pic_material_list(domain=constant.DOMAIN, length_max=32):
             {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
+            {"$sort": SON([("create_time", -1)])},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "create_time": 1}}
         ]
         cursor = manage.client["pic_material"].aggregate(pipeline)

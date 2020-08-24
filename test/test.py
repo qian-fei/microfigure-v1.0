@@ -338,6 +338,6 @@ temp = {
 # for doc in rest:
 #     print(doc)\
 
-trade_data = {"trade_id": 1, "balance": 3, "trade_amount": 3}
-import json
-print(json.dumps(trade_data))
+trade_data = {"trade_id": ["0"], "balance": 3, "trade_amount": 3}
+
+print(trade_data["trade_id"])

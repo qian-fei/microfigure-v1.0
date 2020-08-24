@@ -21,6 +21,39 @@ from utils.alipay import AliPay
 from utils.wechat import WechatPay
 
 
+def add_user_goods_api(order, buyer_id , seller_id):
+    """
+    添加到用户商品
+    :param order: 商品订单
+    :param buyer_id: 买家id
+    :param seller_id: 卖家id
+    """
+    try:
+        cursor = manage.client["order"].find({"order": order})
+        data1 = {}
+        for doc in cursor:
+            if doc["works_id"] not in data1:
+                data1[doc["works_id"]] = [doc["spec"]]
+            else:
+                temp = data1[doc["works_id"]]
+                temp.append(doc["spec"])
+                data1[doc["works_id"]] = list(set(temp))
+        works_id_list = list(data1.keys())
+        data2 = {}
+        cursor = manage.client["works"].find({"uid": {"$in": works_id_list}})
+        for doc in cursor:
+            data2[doc["uid"]] = doc["pic_id"][0]
+        uid = base64.b64encode(os.urandom(16)).decode()
+        condition = []
+        for i in works_id_list:
+            temp = {"uid": uid, "user_id": buyer_id, "works_id": i, "pic_id": data2[i], "spec": data1[i], "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition.append(temp)
+        manage.client["goods"].insert(condition)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
 def post_add_car():
     """加入购物车"""
     try:
@@ -51,7 +84,7 @@ def post_add_car():
         pic_url = doc.get("pic_url")
         thumb_url = doc.get("thumb_url")
         # 规格
-        doc = manage.client["price"].find_one({"uid": price_id})
+        doc = manage.client["price"].find_one({"uid": price_id, "price": price})
         spec = doc.get("format")
         currency = doc.get("currency")
         price_unit = doc.get("price_unit")
@@ -550,6 +583,8 @@ def get_balance_payment():
         doc = manage.client["user"].update({ "uid": seller_id}, {"$inc": {"balance": trade_amount}})
         if doc["n"] == 0:
             raise Exception(f"seller '{seller_id}' balance update failed")
+        # 将商品添加到用户图片库
+        add_user_goods_api(order, user_id, seller_id)
         return response()
     except Exception as e:
         manage.log.error(e)

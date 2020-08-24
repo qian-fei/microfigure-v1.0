@@ -85,8 +85,9 @@ def get_platform_info(uid="001"):
         cursor = manage.client["price"].aggregate(pipeline)
         for doc in cursor:
             data.update({doc["format"]: doc["price"]})
-        cursor = manage.client["support_method"].find({})
-        fees = [doc for doc in cursor][0]["fees"]
+        cursor = manage.client["bank"].find({})
+        fees_list = [doc for doc in cursor]
+        fees = fees_list[0][0]["fees"] if fees_list else 0
         data.update({"fees": fees})
         return response(data=data)
     except Exception as e:

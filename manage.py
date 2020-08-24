@@ -864,7 +864,7 @@ def user_car_add():
 @app.route(f"{url}/car/delete", methods=["DELETE"])
 @auth_user_login
 def user_car_delete():
-    """加入购物车接口"""
+    """删除购物车接口"""
     return app_order_api.delete_user_car_goods()
 
 

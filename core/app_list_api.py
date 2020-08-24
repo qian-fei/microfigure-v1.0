@@ -391,6 +391,8 @@ def get_hot_article_list(hot_max=10):
     try:
         # 用户uid
         user_id = g.user_data["user_id"]
+        visitor_id = request.headers.get("user_id")
+        user_id = user_id if user_id else visitor_id
         # 24小时
         today = datetime.datetime.now()
         yesterday = today - datetime.timedelta(days=1)
@@ -607,7 +609,7 @@ def get_pic_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
                             "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
@@ -615,7 +617,7 @@ def get_pic_detail(domain=constant.DOMAIN):
                             "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}},
                             "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}},
                             }},
-            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item", "like_item", "like_info"]},
+            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item", "like_item", "like_info._id"]},
             {"$project": {"_id": 0}}
         ]
         
@@ -902,7 +904,10 @@ def post_works_like():
         # 记录点赞记录
         doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "type": "zp"})
         if doc:
-            manage.client["like_records"].update({"user_id": user_id, "works_id": works_id, "type": "zp"}, {"$set": {"state": 0, "update_time": int(time.time() * 1000)}})
+            if doc["state"] == 1:
+                manage.client["like_records"].update({"user_id": user_id, "works_id": works_id, "type": "zp"}, {"$set": {"state": 0, "update_time": int(time.time() * 1000)}})
+            else:
+                manage.client["like_records"].update({"user_id": user_id, "works_id": works_id, "type": "zp"}, {"$set": {"state": 1, "update_time": int(time.time() * 1000)}})
         else:
             condition = {"user_id": user_id, "works_id": works_id, "type": "zp", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["like_records"].insert(condition)
@@ -939,9 +944,10 @@ def get_comment_list(domain=constant.DOMAIN):
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"comment_id": "$uid"}, 
+                         "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$comment_id", "$$comment_id"]}, {"$eq": [user_id, "$user_id"]}, {"$eq": [1, "$state"]}]}}}], "as": "like_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
-            {"$addFields": {"head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}, 
+            {"$addFields": {"head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_like": {"$cond": {"if": {"$eq": [1, "$like_info.state"]}, "then": True, "else": False}}, 
                             "nick": "$user_info.nick", "like_num": {"$size": "$like_item"}}},
             {"$unset": ["user_item", "user_info", "like_item", "like_info"]},
             {"$sort": SON([("create_time", -1)])},
@@ -1021,10 +1027,10 @@ def post_comment_like():
         # 写入点赞记录表
         doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "comment_id": comment_id, "type": "pl"})
         if doc:
-            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "update_time": int(time.time() * 1000)}
+            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl"}
             manage.client["like_records"].update(condition, {"$set": {"state": 0}})
         else:
-            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["like_records"].insert(condition)
         return response()
     except Exception as e:
@@ -1201,7 +1207,7 @@ def post_blacklist():
             return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
         doc = manage.client["blacklist"].update({"user_id": user_id, "black_id": black_id}, {"$set": {"state": 1, "update_time": int(time.time() * 1000)}})
         if doc["n"] == 0:
-            manage.client["black"].insert({"user_id": user_id, "black_id": black_id, "state": 1, "update_time": int(time.time()), "create_time": int(time.time() * 1000)})
+            manage.client["blacklist"].insert({"user_id": user_id, "black_id": black_id, "state": 1, "update_time": int(time.time()), "create_time": int(time.time() * 1000)})
         return response()
     except Exception as e:
         manage.log.error(e)
