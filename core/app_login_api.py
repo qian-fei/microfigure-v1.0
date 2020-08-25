@@ -186,7 +186,7 @@ def post_register(nick_limit=8):
         condition = {
             "uid": str(uid), "nick": "微图", "sex": "保密", "age": 20, "mobile": str(mobile), "password": password_b64, "head_img_url": "", "state": 1, "account": str(mobile), "auth": 0,
             "type": "user", "balance": float(0), "works_num":0, "group": "comm", "label": [], "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "login_time": int(time.time() * 1000),
-            "sign": "欢迎来使用趣图，快来更新您的签名吧！", "author": 0
+            "sign": "欢迎来使用趣图，快来更新您的签名吧！"
         }
         # 正常注册
         if not oauth:
@@ -201,7 +201,7 @@ def post_register(nick_limit=8):
         today_stamp = int(time.mktime(today.timetuple()) * 1000)
         doc = manage.client["user_statistical"].update({"user_id": uid, "date": today_stamp}, {"$inc": {"register_num": 1}})
         if doc["n"] == 0:
-            condition = {"user_id": uid, "date": timestamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 1,
+            condition = {"user_id": uid, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 1,
                         "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         # 生成token

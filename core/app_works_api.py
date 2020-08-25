@@ -436,7 +436,7 @@ def post_pic_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=const
         if not pic_id_list:
             return response(msg="Bad Request: Miss param 'pic_id_list'.", code=1, status=400)
         if len(pic_id_list) <= 1:
-            return response(msg="图集至少2张图片哟", code=1)
+            return response(msg="图集至少2张图片", code=1)
         if len(pic_id_list) > pic_id_max:
             return response(msg=f"最多允许选择{pic_id_max}张图片", code=1)
         # 制作图片作品

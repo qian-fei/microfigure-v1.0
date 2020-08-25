@@ -2858,6 +2858,8 @@ GET
 |   like_num   |  是  | Integer  | 点赞数                 |
 | head_img_url |  是  |  String  | 头像                   |
 |    title     |  是  |  String  | 标题                   |
+|   content    |  是  |  String  | 内容                   |
+| create_time  |  是  | Integer  | 时间                   |
 
 返回示例：
 
@@ -2868,9 +2870,11 @@ GET
         "works_id": "0002",
         "title": "大哥大",
         "nick": "中国",
+       	"content": "hahahha",
         "is_like": true,
         "head_img_url": "http://www.baidu.com/img/1.png",
-        "like_num": 250
+        "like_num": 250,
+        "create_time": 12515415241
     	},
         ...
     ],
@@ -2910,11 +2914,14 @@ GET
 
 |   返回字段   | 必须 | 字段类型 | 字段说明               |
 | :----------: | :--: | :------: | :--------------------- |
+|     uid      |  是  |  String  | 唯一id                 |
 |     nick     |  是  |  String  | 昵称                   |
 |   is_like    |  是  | Boolean  | true已点赞,false未点赞 |
 |   like_num   |  是  | Integer  | 点赞数                 |
 | head_img_url |  是  |  String  | 头像                   |
 |    title     |  是  |  String  | 标题                   |
+|   content    |  是  |  String  | 内容                   |
+| create_time  |  是  | Integer  | 时间                   |
 
 返回示例：
 
@@ -2924,8 +2931,10 @@ GET
         "title": "大哥大",
         "nick": "中国",
         "is_like": true,
+        "content": "哈哈哈",
         "head_img_url": "http://www.baidu.com/img/1.png",
-        "like_num": 250
+        "like_num": 250,
+        "create_time": 12515415241
     	},
         ...
     ],

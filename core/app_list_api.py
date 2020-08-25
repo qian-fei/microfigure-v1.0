@@ -534,7 +534,7 @@ def get_video_top_list(video_top_max=10, domain=constant.DOMAIN):
             {"$sort": SON([("order", 1)])},
             {"$limit": video_top_max},
             {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$works_id"]}}}], "as": "like_item"}},
-            {"$project": {"_id": 0, "uid": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "top_titel": 1, "like_num": 1, "browse_num": 1, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+            {"$project": {"_id": 0, "uid": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "top_title": 1, "like_num": 1, "browse_num": 1, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
             {"$unset": ["like_info", "like_item"]}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -1020,18 +1020,25 @@ def post_comment_like():
             return response(msg="Bad Request: Miss params: 'comment_id'.", code=1, status=400)
         if not works_id:
             return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
-        # comment表点赞量+1
-        doc =  manage.client["comment"].update({"uid": comment_id}, {"$inc": {"like_num": 1}})
-        if doc["n"] == 0:
-            return response(msg="Bad Request: Params 'comment_id' is error.", code=1, status=400)
         # 写入点赞记录表
         doc = manage.client["like_records"].find_one({"user_id": user_id, "works_id":  works_id, "comment_id": comment_id, "type": "pl"})
+        n = 1
         if doc:
             condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl"}
-            manage.client["like_records"].update(condition, {"$set": {"state": 0}})
+            if doc["state"] == 1:
+                manage.client["like_records"].update(condition, {"$set": {"state": 0}})
+                n = -1
+            else:
+                manage.client["like_records"].update(condition, {"$set": {"state": 1}})
+                n = 1
         else:
             condition = {"user_id": user_id, "works_id": works_id, "comment_id": comment_id, "type": "pl", "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["like_records"].insert(condition)
+            n = 1
+        # comment表点赞量+1
+        doc =  manage.client["comment"].update({"uid": comment_id}, {"$inc": {"like_num": n}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Params 'comment_id' is error.", code=1, status=400)
         return response()
     except Exception as e:
         manage.log.error(e)
