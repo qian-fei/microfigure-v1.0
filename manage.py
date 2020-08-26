@@ -1719,7 +1719,7 @@ def admin_system_backup_list():
 @auth_admin_login
 def admin_system_backup_state():
     """系统备份删除接口"""
-    return admin_system_api.post_system_backup_list()
+    return admin_system_api.delete_backup_state()
 
 
 @app.route(f"{url}/admin/system/backup", methods=["POST"])

@@ -201,7 +201,7 @@ def post_register(nick_limit=8):
         today_stamp = int(time.mktime(today.timetuple()) * 1000)
         doc = manage.client["user_statistical"].update({"user_id": uid, "date": today_stamp}, {"$inc": {"register_num": 1}})
         if doc["n"] == 0:
-            condition = {"user_id": uid, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 1,
+            condition = {"user_id": uid, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 1,
                         "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         # 生成token

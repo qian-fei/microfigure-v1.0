@@ -534,7 +534,7 @@ def put_pic_works_autio_state():
             for i in cursor:
                 doc = manage.client["user_statistical"].update({"user_id": i["user_id"], "date": today_stamp}, {"$inc": {"goods_num": 1}})
                 if doc["n"] == 0:
-                    condition = {"user_id": i["user_id"], "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 1, "register_num": 0,
+                    condition = {"user_id": i["user_id"], "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 1, "register_num": 0,
                                  "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
                     manage.client["user_statistical"].insert(condition)
 

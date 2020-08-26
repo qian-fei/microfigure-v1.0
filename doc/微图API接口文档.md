@@ -386,7 +386,7 @@ GET
 | create_time  |  是  | Integer  | 创建时间     | 毫秒时间戳                               |
 | update_time  |  是  | Integer  | 更新时间     | 毫秒时间戳                               |
 |  is_follow   |  是  | Boolean  | 是否关注     | true已关注，false未关注                  |
-|   is_like    |  是  | Boolean  | 是否点赞     | true已关注，false未关注                  |
+|   is_like    |  是  | Boolean  | 是否点赞     | true已点赞，false未点赞                  |
 
 返回示例
 
@@ -670,6 +670,7 @@ GET
 | create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳                                                   |
 | update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                                                   |
 |  is_follow   |  是  | Boolean  | 是否关注   | true已关注，false未关注                                      |
+|   is_like    |  是  | Boolean  | 是否点赞   | true已点赞，false未点赞                                      |
 
 返回示例：
 
@@ -700,6 +701,7 @@ GET
             "state": 2,
             "recommend": true,
             "is_follow": true,
+           	"is_like": true,
             "type": "yj",
             "pic_num": 1,
             "like_num": 666,

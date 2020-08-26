@@ -264,7 +264,7 @@ def get_user_follow_works(domain=constant.DOMAIN):
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "video_url": "$video_info.video_url", 
                             "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
                             "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
+            {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -544,7 +544,7 @@ def get_user_data_statistic():
         cursor = manage.client["user_statistical"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         if not data_list:
-            data = {"browse_num": 0, "comment_num": 0, "amount_num": 0, "share_num": 0, "like_num": 0, "sale_num": 0}
+            data = {"browse_num": 0, "comment_num": 0, "amount_num": float(0), "share_num": 0, "like_num": 0, "sale_num": 0}
         return response(data=data_list[0] if data_list else data)
     except Exception as e:
         manage.log.error(e)
@@ -925,11 +925,13 @@ def get_goods_detail(domain=constant.DOMAIN):
             {"$match": {"uid": uid, "type": {"$in": ["tp", "tj"]}}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
                             "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
-                            "nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}}}},
-            {"$unset": ["user_item", "user_info", "pic_temp_item"]},
+                            "nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", 
+                            "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
+            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item"]},
             {"$project": {"_id": 0}}
         ]
         
@@ -946,7 +948,7 @@ def get_goods_detail(domain=constant.DOMAIN):
                 {"$match": {"uid": pic_data[0].get("price_id")}},
                 {"$lookup": {"from": "goods", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$eq": ["$pic_id", "$$pic_id"]}}}], "as": "goods_item"}},
                 {"$addFields": {"goods_info": {"$arrayElemAt": ["$goods_item", 0]}}},
-                {"$addFields": {"spec": "$goods_info.spec"}},
+                {"$addFields": {"spec": "$goods_info.spec", "pic_url": {"$concat": [domain, "$pic_url"]}}},
                 {"$project": {"_id": 0, "pic_url": {"$cond": {"if": {"$in": ["$format", "$spec"]}, "then": "$pic_url", "else": None}}, "format": 1, "height": 1, "width": 1, "price": 1, "currency": 1}}
             ]
             cursor = manage.client["price"].aggregate(pipeline)
@@ -988,7 +990,6 @@ def get_pic_material_list(domain=constant.DOMAIN, length_max=32):
             {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$sort": SON([("create_time", -1)])},
             {"$project": {"_id": 0, "uid": 1, "title": 1, "label": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "create_time": 1}}
         ]
         cursor = manage.client["pic_material"].aggregate(pipeline)
@@ -1359,6 +1360,7 @@ def get_pic_works_details(domain=constant.DOMAIN):
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
 
 # 弃用
 def post_pic_portrait(domain=constant.DOMAIN, home_length_max=128, nick_length_max=64):
@@ -1913,7 +1915,7 @@ def put_pic_works_editor(label_length_max=20, title_length_max=32):
 
 def get_user_altas_detail(domain=constant.DOMAIN):
     """
-    图集上架申请详情
+    图集、影集上架申请详情
     :param domain: 域名
     """
     try:
@@ -2005,7 +2007,7 @@ def post_altas_apply(label_length_max=20, title_length_max=32, domain=constant.D
 
 def post_altas_detail_editor(label_length_max=20, title_length_max=32, domain=constant.DOMAIN):
     """
-    图集上架申请编辑
+    图集、影集上架申请编辑
     :param label_length_max: 标签上限
     :param title_length_max: 标题上限
     :param domain: 域名
@@ -2191,7 +2193,7 @@ def post_share_works():
         timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
         doc = manage.client["user_statistical"].update({"user_id": user_id, "date": timestamp}, {"$inc": {"share_num": 1}})
         if doc["n"] == 0:
-            condition = {"user_id": user_id, "date": timestamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+            condition = {"user_id": user_id, "date": timestamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
                          "comment_num": 0, "share_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         return response()

@@ -247,7 +247,7 @@ def works_browse_records_api(works_id):
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
         else:
-            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 1, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 1, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
                             "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
     except Exception as e:
@@ -458,7 +458,7 @@ def get_article_list(domain=constant.DOMAIN):
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", 
                             "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
                             "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["pic_item._id", "pic_item.pic_url", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
+            {"$unset": ["pic_item._id", "pic_item.pic_url", "user_item", "user_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         # 排序
@@ -670,11 +670,13 @@ def get_video_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
             {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
                             "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id", "works_state": "$$item.works_state"}}}, 
-                            "user_info": {"$arrayElemAt": ["$user_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]}, "audio_info": {"$arrayElemAt": ["$audio_item", 0]}}},
+                            "user_info": {"$arrayElemAt": ["$user_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]}, "audio_info": {"$arrayElemAt": ["$audio_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "works_num": "$user_info.works_num", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "video_url": "$video_info.video_url", 
-                            "audio_url": "$audio_info.audio_url", "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}}}},
+                            "audio_url": "$audio_info.audio_url", "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}},
+                            "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "user_item", "user_info", "video_item", "audio_item", "video_info", "audio_info"]},
             {"$project": {"_id": 0}}
         ]
@@ -705,9 +707,10 @@ def get_article_detail(domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"uid": uid}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}}}},
-            {"$unset": ["user_item", "user_info"]},
+            {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
+            {"$unset": ["user_item", "user_info", "follow_item"]},
             {"$project": {"_id": 0}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -837,8 +840,8 @@ def get_search_works(search_max=100, domain=constant.DOMAIN):
                                 "user_info": {"$arrayElemAt": ["$user_item", 0]}, "browse_info": {"$arrayElemAt": ["$browse_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]}, 
                                 "audio_info": {"$arrayElemAt": ["$audio_item", 0]}}},
                 {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "video_url": "$video_info.video_url",
-                                "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}}},
-                {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info"]},
+                                "audio_url": "$audio_info.audio_url", "cover_url": {"$concat": [domain, "$cover_url"]}, "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}}},
+                {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info"]},
                 {"$project": {"_id": 0}}
             ]
             cursor = manage.client["works"].aggregate(pipeline)
@@ -901,7 +904,7 @@ def post_works_like():
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"like_num": 1}})
         else:
-            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 1, "goods_num": 0, "register_num": 0,
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 1, "goods_num": 0, "register_num": 0,
                          "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         # 记录点赞记录
@@ -1001,7 +1004,7 @@ def  post_comment_records():
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"comment_num": 1}})
         else:
-            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
                          "comment_num": 1, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         return response()
