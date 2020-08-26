@@ -980,7 +980,7 @@ GET
 接口说明：
 
 ```
-文档管理列表。请求头需要携带module_id和permission_id
+文档管理列表
 ```
 
 请求参数：无
@@ -3377,13 +3377,27 @@ GET
 |   page   |  是  | Integer  | 页码     |      |
 |   num    |  是  | Integer  | 页数     |      |
 
-返回字段：无
+返回字段：
+
+|  返回字段   | 必须 | 字段类型 | 字段说明  |
+| :---------: | :--: | :------: | :-------- |
+|     uid     |  是  |  String  | 唯一id    |
+|    name     |  是  |  String  | 备份名称  |
+| instruction |  是  |  String  | 备份说明d |
+| create_time |  是  | Integer  | 时间      |
 
 返回示例：
 
 ```json
 {
-  "data": null,
+  "data": [{
+      "uid": "001",
+      "name": "名称",
+      "instruction": "哈哈",
+      "create_time": 1125145241
+  	},
+    ...
+  ],
   "code": 0,
   "msg": "Request successful."
 }

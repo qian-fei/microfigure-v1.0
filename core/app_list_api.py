@@ -66,7 +66,7 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, is_recom
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "video_url": "$video_info.video_url", 
                             "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
                             "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
+            {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info", "browse_item"]},
             {"$project": {"_id": 0}}
         ]
         # 是否推荐
@@ -219,44 +219,37 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def post_browse_records():
+def works_browse_records_api(works_id):
     """浏览记录"""
     try:
         # 用户uid
         user_id = g.user_data["user_id"]
         # 获取参数
-        visitor_id = request.headers.get("user_id", None)
+        visitor_id = request.headers.get("user_id")
         user_id = user_id if user_id else visitor_id
-        works_id_list = request.json.get("works_id", None) # array
-        for works_id in works_id_list:
-            if not works_id:
-                return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
-            if not user_id:
-                return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
-            doc = manage.client["works"].find_one({"uid": works_id})
-            if not doc:
-                return response(msg="Bad Request: 'works_id' data does not exist.", code=1, status=400)
-            type = doc.get("type")
-            # 记录
-            condition = {"user_id": user_id, "works_id": works_id, "type": type, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-            manage.client["browse_records"].insert(condition)
-            # 浏览量+1
-            doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"browse_num": 1}})
-            if doc["n"] == 0:
-                return response(msg="Bad Request: Params 'works_id' is error.", code=1, status=400)
-            # 凌晨时间戳
-            today = datetime.date.today()
-            today_stamp = int(time.mktime(today.timetuple())*1000)
-            doc = manage.client["works"].find_one({"works_id": works_id})
-            author_id = doc.get("user_id")
-            doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
-            if doc:
-                manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
-            else:
-                condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 1, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
-                             "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-                manage.client["user_statistical"].insert(condition)
-        return response()
+        # works_id_list = request.json.get("works_id") # array
+        # for works_id in works_id_list:
+        doc = manage.client["works"].find_one({"uid": works_id})
+        type = doc.get("type")
+        author_id = doc.get("user_id")
+        # 记录
+        condition = {"user_id": user_id, "works_id": works_id, "type": type, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+        manage.client["browse_records"].insert(condition)
+        # 浏览量+1
+        doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"browse_num": 1}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Params 'works_id' is error.", code=1, status=400)
+        # 凌晨时间戳
+        today = datetime.date.today()
+        today_stamp = int(time.mktime(today.timetuple()) * 1000)
+        author_id = doc.get("user_id")
+        doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
+        if doc:
+            manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
+        else:
+            condition = {"user_id": author_id, "date": today_stamp, "works_num": 0, "sale_num": 0, "browse_num": 1, "amount": 0, "like_num": 0, "goods_num": 0, "register_num": 0,
+                            "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            manage.client["user_statistical"].insert(condition)
     except Exception as e:
         manage.log.error(e)
         return resposne(msg="Internal Server Error: %s." % str(e), code=1, status=500)
@@ -602,6 +595,8 @@ def get_pic_detail(domain=constant.DOMAIN):
         works_id = request.args.get("works_id")
         if not uid:
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         # 查询数据
         # 图片详情信息
         pipeline = [
@@ -626,7 +621,8 @@ def get_pic_detail(domain=constant.DOMAIN):
         if not pic_data:
             return response(msg="Bad Request: The picture doesn't exist.", code=1, status=400)
         data["pic_data"] = pic_data[0]
-
+        # 浏览数+1
+        works_browse_records_api(works_id)
         # TODO 筛选与此作品对应的价格信息，并满足state=1
         price_data = []
         if pic_data[0].get("price_id"):
@@ -684,6 +680,10 @@ def get_video_detail(domain=constant.DOMAIN):
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data = [doc for doc in cursor]
+        if not data:
+            return response(msg="Bad Request: Param 'works_id' is error.", code=1, status=400)
+        # 浏览数+1
+        works_browse_records_api(uid)
         return response(data=data[0] if data else None)
     except Exception as e:
         manage.log.error(e)
@@ -712,7 +712,10 @@ def get_article_detail(domain=constant.DOMAIN):
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data = [doc for doc in cursor]
-        
+        if not data:
+            return response(msg="Bad Request: Params 'uid' is error.", code=1, status=400)
+        # 浏览数+1
+        works_browse_records_api(uid)
         return response(data=data[0] if data else None)
     except Exception as e:
         manage.log.error(e)

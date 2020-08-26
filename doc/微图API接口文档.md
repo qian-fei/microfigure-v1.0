@@ -960,7 +960,7 @@ GET
 }
 ```
 
-##### 12.浏览记录接口
+##### 12.浏览记录接口（丢弃）
 
 请求URL：
 
@@ -2915,6 +2915,7 @@ GET
 |   返回字段   | 必须 | 字段类型 | 字段说明               |
 | :----------: | :--: | :------: | :--------------------- |
 |     uid      |  是  |  String  | 唯一id                 |
+|   works_id   |  是  |  String  | 作品id                 |
 |     nick     |  是  |  String  | 昵称                   |
 |   is_like    |  是  | Boolean  | true已点赞,false未点赞 |
 |   like_num   |  是  | Integer  | 点赞数                 |
@@ -2928,6 +2929,8 @@ GET
 ```json
 {
     "data": [{
+        "uid": "001",
+        "works_id": "002",
         "title": "大哥大",
         "nick": "中国",
         "is_like": true,

@@ -2074,7 +2074,7 @@ def get_article_wokrs_list(domain=constant.DOMAIN, length_max=32):
             {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$project": {"_id": 0, "uid": 1, "title": 1, "content": 1, "cover_url": {"$concat": [domain, "$cover_url"]}, "state": 1, "create_time": 1}},
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "content": "$desc", "cover_url": {"$concat": [domain, "$cover_url"]}, "state": 1, "create_time": 1}},
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]

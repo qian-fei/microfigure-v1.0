@@ -405,7 +405,7 @@ def post_system_backup_list():
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$group": {"_id": {"uid": "$uid", "name": "$name", "instruction": "$instruction", "create_time": "$create_time"}}},
-            {"$project": {"_id": 0, "uid": "$uid", "name": "$_id.name", "instruction": "$_id.instruction", "create_time": "$_id.create_time"}}
+            {"$project": {"_id": 0, "uid": "$_id.uid", "name": "$_id.name", "instruction": "$_id.instruction", "create_time": "$_id.create_time"}}
         ]
         cursor = manage.client["backup"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -432,7 +432,7 @@ def delete_backup_state():
         uid = request.json.get("uid")
         if not uid:
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
-        doc = manage.client["backup"].update({"uid": uid}, {"$set": {"state": -1}})
+        doc = manage.client["backup"].update({"uid": uid}, {"$set": {"state": -1}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Bad Request: Params 'uid' is error.", code=1, status=400)
         return response()

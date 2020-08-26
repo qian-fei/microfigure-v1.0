@@ -258,13 +258,6 @@ def hot_kw_label():
     return app_list_api.get_label_kw()
 
 
-@app.route(f"{url}/browse", methods=["POST"])
-@auth_user_login
-def browse_records():
-    """浏览记录接口"""
-    return app_list_api.post_browse_records()
-
-
 @app.route(f"{url}/hot/keyword", methods=["GET"])
 def hot_keyword():
     """热搜词接口"""
@@ -1135,7 +1128,6 @@ def admin_front_video_add():
 
 @app.route(f"{url}/admin/document/list", methods=["GET"])
 @auth_admin_login
-@auth_amdin_role
 def admin_front_document_list():
     """后台前台置文档管理列表接口"""
     return admin_front_api.get_agreement_list()
