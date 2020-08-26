@@ -612,7 +612,7 @@ def put_user_audit_state():
             return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
         if auth not in [0, 2]:
             return response(msg="Bad Request:Params 'auth' is error.", code=1, status=400)
-        doc = manage.client["user"].update({"uid": {"$in": user_id}}, {"$set": {"auth": int(auth), "group": "authjjkkkjvi te"}}, multi=True)
+        doc = manage.client["user"].update({"uid": {"$in": user_id}}, {"$set": {"auth": int(auth), "group": "auth"}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
         return response()

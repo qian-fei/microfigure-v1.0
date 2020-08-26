@@ -78,7 +78,7 @@ def fans_list_api(user_id, domain=constant.DOMAIN):
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"head_img_url": "$user_info.head_img_url", "nick": "$user_info.nick"}},
             {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "user_id": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "create_time": 1}}
+            {"$project": {"_id": 0, "fans_id": 1, "nick": 1, "head_img_url": {"$cond": {"if": {"$eq": ["$head_img_url", ""]}, "then": "$head_img_url", "else": {"$concat": [domain, "$head_img_url"]}}}, "create_time": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
