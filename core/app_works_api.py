@@ -633,7 +633,7 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
         if not pic_id_list:
             return response(msg="Bad Request: Miss param 'pic_id_list'.", code=1, status=400)
         if len(pic_id_list) <= 1:
-            return response(msg="图集至少2张图片哟", code=1)
+            return response(msg="图集至少2张图片", code=1)
         if len(pic_id_list) > pic_id_max:
             return response(msg=f"最多允许选择{pic_id_max}张图片", code=1)
         if not me_works_id:
@@ -683,6 +683,28 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
             "works_id": me_works_id
         }
         return response(data=data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_user_add_label():
+    """用户添加标签"""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        label = request.json.get("label") # array
+        if not label:
+            return response(msg="Bad Request: Miss params: 'label'.", code=1, status=400)
+        # 记录标签
+        for i in label:
+            condition = {"user_id": user_id, "label": i, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            doc = manage.client["history_label"].find_one({"user_id": user_id, "label": i})
+            if not doc:
+                manage.client["history_label"].insert(condition)
+        return response()
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

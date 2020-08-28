@@ -32,8 +32,8 @@ CORS(app, supports_credentials=True)
 # 允许输出中文
 app.config["JSON_AS_ASCII"] = False
 # 生成密钥 base64.b64encode(os.urandom(64)).decode()
-SECRET_KEY = "p7nHRvtLdwW07sQBoh/p9EBmHXv9DAcutk2vlj4MdSPNgFeTobUVJ3Ss2Wwl3T3tuv/ctTpPw+nQKMafU3MRJQ=="
-app.secret_key = SECRET_KEY
+# SECRET_KEY = "p7nHRvtLdwW07sQBoh/p9EBmHXv9DAcutk2vlj4MdSPNgFeTobUVJ3Ss2Wwl3T3tuv/ctTpPw+nQKMafU3MRJQ=="
+# app.secret_key = SECRET_KEY
 # 允许上传的文件类型
 # ALLOWED_EXTENSIONS = ["txt", "pdf", "png", "jpg", "jpeg", "gif", "mp3", "svg", "avi", "mov", "rmvb", "rm", "flv", "mp4", "3gp", "asf", "asx"]
 
@@ -45,6 +45,7 @@ log.info("The application has started.")
 mongo = util.MongoDB(log)
 # 连接数据库
 client = mongo.client["local_writer"]["microfigure"]
+
 # 云数据库链接
 # CONN_ADDR1 = "dds-uf6c62f85a588a641741-pub.mongodb.rds.aliyuncs.com:3717" 
 # CONN_ADDR2 = "dds-uf6c62f85a588a642965-pub.mongodb.rds.aliyuncs.com:3717"
@@ -300,6 +301,12 @@ def sms_code():
 def sms_code_verify():
     """短信验证码校验接口"""
     return app_login_api.post_sms_verify()
+
+
+@app.route(f"{url}/mobile/verify", methods=["POST"])
+def verify_mobile_is_register():
+    """校验手机号是否已被注册接口"""
+    return app_login_api.post_mobile_verify()
 
 
 @app.route(f"{url}/register", methods=["POST"])
@@ -952,11 +959,25 @@ def balance_recharge_callback_wechat():
     return app_order_api.post_top_up_wechat_callback_verify()
 
 
+@app.route(f"{url}/notpay/order/count", methods=["GET"])
+@auth_user_login
+def user_notpay_count_order():
+    """用户未付款订单数接口"""
+    return app_order_api.get_not_complete_order_count()
+
+
 @app.route(f"{url}/video/label/search", methods=["GET"])
 @auth_user_login
 def user_video_label_searc():
     """影集搜索标签接口"""
     return app_works_api.get_video_search_label()
+
+
+@app.route(f"{url}/user/add/label", methods=["POST"])
+@auth_user_login
+def user_add_label():
+    """用户添加标签接口"""
+    return app_works_api.post_user_add_label()
 
 
 @app.route(f"{url}/video/pic/upload", methods=["POST"])
@@ -971,6 +992,30 @@ def user_video_pic_upload():
 def user_video_works_create():
     """影集作品制作接口"""
     return app_works_api.post_video_collect_works()
+
+
+@app.route(f"{url}/user/agreement/user", methods=["GET"])
+def user_agreement():
+    """用户协议接口"""
+    return app_user_api.get_user_agreement()
+
+
+@app.route(f"{url}/user/agreement/portrait", methods=["GET"])
+def user_portrait_agreement():
+    """肖像协议接口"""
+    return app_user_api.get_portrait_agreement()
+
+
+@app.route(f"{url}/user/agreement/product", methods=["GET"])
+def user_product_agreement():
+    """物产协议接口"""
+    return app_user_api.get_product_agreement()
+
+
+@app.route(f"{url}/user/agreement/authorized", methods=["GET"])
+def user_authorized_contract():
+    """授权合同接口"""
+    return app_user_api.get_download_authorized_contract()
 
 
 ############################################################【后台管理系统API】############################################################
@@ -1136,9 +1181,17 @@ def admin_front_document_list():
 @app.route(f"{url}/admin/document/state", methods=["PUT"])
 @auth_admin_login
 @auth_amdin_role
-def admin_front_document_state():
-    """后台前台置文档管理删除接口"""
-    return admin_front_api.put_agreement_list()
+def admin_front_document_editor():
+    """后台前台置文档编辑接口"""
+    return admin_front_api.put_agreement_editor()
+
+
+@app.route(f"{url}/admin/document/upload", methods=["POST"])
+@auth_admin_login
+@auth_amdin_role
+def admin_front_document_upload():
+    """后台前台置文档上传接口"""
+    return admin_front_api.upload_docx_file()
 
 
 @app.route(f"{url}/admin/material/pic/list", methods=["GET"])
@@ -1738,13 +1791,13 @@ def admin_system_reduction():
 
 @app.route(f"{url}/test", methods=["GET", "POST"])
 def test():
-    data = request.args
+    # data = request.args
     # import xmltodict
     # xml = xmltodict.unparse({"xml": data}, pretty=True, full_document=False).encode("utf-8")
     # return jsonify({"return_code": "SUCCESS", "return_msg": "OK"})
     # return Response(xml)
     # rest = request.form.to_dict()
-    return data
+    return admin_front_api.upload_docx_file()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

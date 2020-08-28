@@ -1020,21 +1020,21 @@ GET
 请求方式：
 
 ```
-GET
+PUT
 ```
 
 接口说明：
 
 ```
-文档管理列表。请求头需要携带module_id和permission_id
+编辑文档。请求头需要携带module_id和permission_id
 ```
 
 请求参数：
 
-| 请求参数 | 必须 | 参数类型 | 参数说明 |
-| :------: | :--: | :------: | :------- |
-|   uid    |  是  |  String  | 唯一id   |
-| content  |  是  |  String  | 内容     |
+| 请求参数 | 必须 | 参数类型 | 参数说明                                                     |
+| :------: | :--: | :------: | :----------------------------------------------------------- |
+| content  |  是  |  String  | 内容                                                         |
+|   type   |  是  |  String  | user_agreement用户协议，authorized_contract授权合同，product_contract物产授权，portrait_agreement肖像协议 |
 
 返回字段：无
 
@@ -1047,6 +1047,47 @@ GET
     "code": 0
 }
 ```
+
+##### 17.word文档上传
+
+请求URL：
+
+```
+/api/v1/admin/document/upload
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+上传文档。请求头需要携带module_id和permission_id
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明                                                     |
+| :------: | :--: | :------: | :----------------------------------------------------------- |
+|   doc    |  是  |  String  | 文件字段名                                                   |
+|   type   |  是  |  String  | user_agreement用户协议，authorized_contract授权合同，product_contract物产授权，portrait_agreement肖像协议 |
+
+返回字段：无
+
+返回示例: 
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 
 
 #### 四、用户管理模块
 

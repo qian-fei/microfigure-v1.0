@@ -284,6 +284,27 @@ def get_user_order_list(domain=constant.DOMAIN):
         return response(msg="Internal Server Error: %s.", code=1, status=500)
 
 
+def get_not_complete_order_count():
+    """未付款的订单数"""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        pipeline = [
+            {"$match": {"user_id": user_id, "state": 1}},
+            {"$group": {"_id": "$order"}},
+            {"$count": "count"},
+        ]
+        cursor = manage.client["order"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        count = data_list[0]["count"] if data_list else 0
+        return response(data=count)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s.", code=1, status=500)
+
+
 def put_user_order():
     """取消订单"""
     try:

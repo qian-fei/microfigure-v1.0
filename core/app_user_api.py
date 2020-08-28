@@ -115,8 +115,9 @@ def user_works_api(user_id, page, num, domain=constant.DOMAIN):
             {"$addFields": {"video_url": "$video_info.video_url", "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, 
                             "cover_url": {"$concat": [domain, "$cover_url"]}, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info", "browse_item"]},
+            {"$sort": SON([("create_time", -1)])},
             {"$project": {"_id": 0}},
-            {"$sort": SON([("create_time", -1)])}
+            
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         works_list = [doc for doc in cursor]
@@ -232,24 +233,24 @@ def get_user_follow_works(domain=constant.DOMAIN):
         user_id = g.user_data["user_id"]
         if not user_id:
             return response(msg="Bad Request: User not logged in.", code=1, status=400)
-        dtime = datetime.datetime.now()
-        dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
-        timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
-        now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
-        yesterday_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
+        # dtime = datetime.datetime.now()
+        # dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(0)
+        # timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
+        # now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
+        # yesterday_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=1)).timetuple())) * 1000
         # 查询数据
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
-            # {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
-            #              "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
-            # {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            # {"$unset": ["works_item._id"]},
+            {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
+                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$unset": ["works_item._id"]},
             {"$project": {"_id": 0, "user_id": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
         user_list = [doc["user_id"] for doc in cursor]
         pipeline = [
-            {"$match": {"user_id": {"$in": user_list}, "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": int(time.time() * 1000)}}]}},
+            {"$match": {"user_id": {"$in": user_list}}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
@@ -272,6 +273,9 @@ def get_user_follow_works(domain=constant.DOMAIN):
         count = len(data_list)
         data["count"] = count
         data["works_list"] = data_list
+        doc = manage.client["follow"].update({"user_id": {"$in": user_list}}, {"$set": {"last_look_time": int(time.time() * 1000)}})
+        if not doc:
+            return response(msg="'last_look_time' update failed.", code=1, status=400)
         return response(data=data)
     except Exception as e:
         manage.log.error(e)
@@ -2197,6 +2201,62 @@ def post_share_works():
                          "comment_num": 0, "share_num": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["user_statistical"].insert(condition)
         return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_download_authorized_contract(domain=constant.DOMAIN):
+    """下载授权合同"""
+    data = {}
+    try:
+        doc = manage.client["document"].find_one({"type": "authorized_contract"})
+        if not doc:
+            raise Exception("Lack of authorization contract")
+        file_path = doc["file_path"]
+        content = doc["content"]
+        data["file_path"] = "http://192.168.1.183:8080" + file_path
+        data["content"] = content
+        return response(data=data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_user_agreement():
+    """用户协议"""
+    try:
+        doc = manage.client["document"].find_one({"type": "user_agreement"})
+        if not doc:
+            raise Exception("Lack of user agreement")
+        content = doc["content"]
+        return response(data=content)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_product_agreement():
+    """物产授权"""
+    try:
+        doc = manage.client["document"].find_one({"type": "product_contract"})
+        if not doc:
+            raise Exception("Lack of user agreement")
+        content = doc["content"]
+        return response(data=content)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_portrait_agreement():
+    """肖像协议"""
+    try:
+        doc = manage.client["document"].find_one({"type": "portrait_agreement"})
+        if not doc:
+            raise Exception("Lack of user agreement")
+        content = doc["content"]
+        return response(data=content)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

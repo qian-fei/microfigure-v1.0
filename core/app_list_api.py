@@ -636,7 +636,7 @@ def get_pic_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$unset": ["pic_item._id", "pic_item.pic_url"]},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
-                            "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}}},
+                            "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id", "works_state": "$$item.works_state"}}}}},
             {"$project": {"_id": 0, "pic_item": {"$filter": {"input": "$pic_item", "as": "pic", "cond": {"$ne": ["$$pic.uid", uid]}}}}},
             {"$project": {"pic_item": 1}}
         ]
@@ -1097,31 +1097,6 @@ def post_comment_report():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def post_follow_user():
-    """作者关注接口"""
-    try:
-        # 用户是否登录
-        user_id = g.user_data["user_id"]
-        if not user_id:
-            return response(msg="Bad Request: Please log in.", code=1, status=400)
-        # 作者uid
-        author_id = request.args.get("author_id", None)
-        if not author_id:
-            return response(msg="Bad Request: Miss params: 'author_id'.", code=1, status=400)
-        doc = manage.client["follow"].find_one({"user_id": author_id, "fans_id": user_id})
-        if doc:
-            # 取消关注
-            manage.client["follow"].update({"user_id": author_id, "fans_id": user_id}, {"$set": {"state": 0}})
-        else:
-            # 关注
-            condition = {"user_id": author_id, "fans_id": user_id, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-            manage.client["follow"].insert(condition)
-        return response()
-    except Exception as e:
-        manage.log.error(e)
-        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
-
-
 def get_option_label(label_max=20):
     """
     自定义供选标签
@@ -1197,7 +1172,7 @@ def post_follow_user():
                 manage.client["follow"].update({"user_id": author_id, "fans_id": user_id}, {"$set": {"state": 1}})
         else:
             # 新增关注
-            condition = {"user_id": author_id, "fans_id": user_id, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition = {"user_id": author_id, "fans_id": user_id, "state": 1, "last_look_time": int(time.time() * 1000), "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
             manage.client["follow"].insert(condition)
         return response()
     except Exception as e:

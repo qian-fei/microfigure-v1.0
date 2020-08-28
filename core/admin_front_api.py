@@ -412,7 +412,7 @@ def put_video_works(limit=20, domain=constant.DOMAIN):
 def get_agreement_list():
     """文档管理"""
     try:
-        cursor = manage.client["document"].find({"state": 1}, {"_id": 0, "type": 1, "content": 1})
+        cursor = manage.client["document"].find({"state": 1}, {"_id": 0, "uid": 1, "type": 1, "content": 1})
         data_list = [doc for doc in cursor]
         return response(data=data_list)
     except Exception as e:
@@ -420,17 +420,42 @@ def get_agreement_list():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def put_agreement_list():
+def put_agreement_editor():
     """编辑文档"""
     try:
         # 参数
-        uid = request.json.get("uid")
         content = request.json.get("content")
-        if not content:
-            return response(msg="Bad Request: Miss params: 'content'", code=1, status=400)
-        if not uid:
-            return response(msg="Bad Request: Miss params: 'uid'", code=1, status=400)
-        doc = manage.client["document"].update({"uid": uid}, {"$set": {"content": content}})
+        type = request.json.get("type")
+        if not type:
+            return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
+        doc = manage.client["document"].update({"type": type}, {"$set": {"content": content}})
+        if doc["n"] == 0:
+            return response(msg="Bad Request: Param 'uid' is error.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def upload_docx_file():
+    """上传word文件"""
+    try:
+        file = request.files.get("doc")
+        type = request.form.get("type")
+        if not type:
+            return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
+        path_p = os.getcwd() + "/statics/files/document"
+        file_ext = file.filename.split(".")[-1]
+        if file_ext != "docx":
+            return response(msg="只允许上传word文件", code=1)
+        # 创建目录
+        if not os.path.exists(path_p):
+            os.makedirs(path_p)
+        # 写入文件
+        with open(path_p + f"/{type}.docx", "wb") as f:
+            f.write(file.read())
+        file_path = f"/document/{type}.docx"
+        doc = manage.client["document"].update({"type": type}, {"$set": {"file_path": file_path}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Param 'uid' is error.", code=1, status=400)
         return response()

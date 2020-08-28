@@ -445,3 +445,38 @@ def get_forgot_password():
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
+
+
+def post_mobile_verify():
+    """校验手机是否已经注册"""
+    try:
+        # 获取参数
+        mobile = request.json.get("mobile")
+        sms_code = request.json.get("sms_code")
+
+        # 判断参数是否为空
+        if not mobile:
+            return response(msg="请输入手机号码", code=1)
+        if not sms_code:
+            return response(msg="请输入短信验证码", code=1)
+
+        # 判断手机号长度
+        if len(str(mobile)) != 11:
+            return response(msg="请输入正确的手机号", code=1)
+
+        # 判断手机格式
+        if not re.match(r"1[35678]\d{9}", str(mobile)):
+            return response(msg="请输入正确的手机号", code=1)
+
+        # 验证短信验证码
+        verify_doc = manage.client["verify"].find_one({"uid": str(mobile), "type": "sms", "code": str(sms_code)})
+        if not verify_doc:
+            return response(msg="手机号或短信验证码错误", code=1)
+        # 校验手机是否已经被注册
+        doc = manage.client["user"].find_one({"mobile": mobile})
+        if doc: 
+            return response(msg="手机号已被注册", code=1)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
