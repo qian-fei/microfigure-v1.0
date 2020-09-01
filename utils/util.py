@@ -60,6 +60,29 @@ def genrate_file_number():
     return random_str
 
 
+def generate_uid(num=16):
+    """
+    生成uid
+    :param num: uid位数
+    """
+    uid = hashlib.md5(base64.b64encode(os.urandom(num))).hexdigest()
+    return uid
+
+
+def generate_timestamp(d=1, h=0):
+    """
+    生成时间戳
+    :param d: 某天
+    :param h: 某时
+    """
+    dtime = datetime.datetime.now()
+    dtime_str = dtime.strftime("%Y-%m-%d") + " 0{}:00:00".format(h)
+    timeArray = datetime.datetime.strptime(dtime_str, "%Y-%m-%d %H:%M:%S")
+    now_timestamp = int(time.mktime(timeArray.timetuple()) * 1000)
+    before_timestamp = int(time.mktime((timeArray - datetime.timedelta(days=d)).timetuple()) * 1000)
+    return now_timestamp, before_timestamp
+
+
 class Logger(object):
     """创建日志器"""
 

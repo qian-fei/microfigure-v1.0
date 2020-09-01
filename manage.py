@@ -126,7 +126,7 @@ def auth_admin_login(f):
             doc = client["user"].find_one({"token": token, "type": {"$in": ["super","admin"]}}, 
                                           {"_id": 0, "uid": 1, "type": 1, "nick": 1, "sex": 1, "sign": 1, "mobile": 1, "role_id": 1})
             if not doc:
-                return response(msg="Bad Request: The user doesn't exist.", code=1, status=400)   
+                return response(msg="Token fails, please login again.", code=1, status=401)   
             if doc["type"] not in ["super", "admin"]:
                 return response(msg="Bad Request: You don't have permission", code=1, status=400)
             uid = doc.get("uid")

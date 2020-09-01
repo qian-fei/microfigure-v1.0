@@ -623,10 +623,10 @@ def get_pic_detail(domain=constant.DOMAIN):
         data["pic_data"] = pic_data[0]
         # 浏览数+1
         works_browse_records_api(works_id)
-        # TODO 筛选与此作品对应的价格信息，并满足state=1
+        # 筛选与此作品对应的价格信息，并满足state=1
         price_data = []
         if pic_data[0].get("price_id"):
-            cursor = manage.client["price"].find({"uid": pic_data[0]["price_id"]}, {"_id": 0})
+            cursor = manage.client["price"].find({"uid": pic_data[0]["price_id"], "state": 1}, {"_id": 0})
             price_data = [doc for doc in cursor]
         data["price_data"] = price_data
 
@@ -677,7 +677,7 @@ def get_video_detail(domain=constant.DOMAIN):
             {"$addFields": {"nick": "$user_info.nick", "works_num": "$user_info.works_num", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "video_url": "$video_info.video_url", 
                             "audio_url": "$audio_info.audio_url", "is_follow": {"$cond": {"if": {"$eq": ["$user_info.uid", user_id]}, "then": True, "else": False}},
                             "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}}}},
-            {"$unset": ["pic_temp_item", "user_item", "user_info", "video_item", "audio_item", "video_info", "audio_info"]},
+            {"$unset": ["pic_temp_item", "user_item", "user_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)

@@ -121,7 +121,7 @@ def post_audio_upload_common(domain=constant.DOMAIN):
         for i in data:
             file_path = i["file_path"]
             i["file_path"] = domain + file_path
-            # 音频写入me中me_music表
+            # TODO音频写入me中me_music表
             # from dateutil import parser 
             # date = parser.parse(datetime.datetime.utcnow().isoformat()) # mongo Date格式的时间
             # condition = {"music_path": file_path, "muisc_upload_user": user_id, "createAt": date, "updateAt": date}
@@ -237,6 +237,7 @@ def get_pic_material(domain=constant.DOMAIN):
         # 查询
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
+            {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$project": {"_id": 0, "uid": 1, "pic_url": {"$concat": [domain, "$pic_url"]}, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "label": 1, "title": 1, "format": 1}}

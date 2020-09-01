@@ -440,7 +440,7 @@ def get_forgot_password():
         password_b64 = base64.b64encode(password.encode()).decode()
 
         # 更新密码
-        client["user"].update_one({"uid": uid}, {"$set": {"password": password_b64}})
+        manage.client["user"].update_one({"uid": uid}, {"$set": {"password": password_b64}})
         return response()
     except Exception as e:
         manage.log.error(e)
