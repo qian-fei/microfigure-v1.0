@@ -1366,6 +1366,13 @@ def admin_user_filter():
     return admin_user_api.get_user_filter_list()
 
 
+@app.route(f"{url}/admin/user/group", methods=["GET"])
+@auth_admin_login
+def admin_user_group_list():
+    """用户分组类型接口"""
+    return admin_user_api.get_user_group_list()
+
+
 @app.route(f"{url}/admin/user/state", methods=["PUT"])
 @auth_admin_login
 @auth_amdin_role

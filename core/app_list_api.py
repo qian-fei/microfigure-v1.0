@@ -1006,7 +1006,7 @@ def  post_comment_records():
         if data_list: 
             return response(msg="您输入的内容包含铭感词汇, 请重新输入", code=1)
         uid = base64.b64encode(os.urandom(32)).decode()
-        condition = {"uid": uid, "user_id": user_id, "works_id": works_id, "content": content, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+        condition = {"uid": uid, "user_id": user_id, "works_id": works_id, "like_num": 0, "content": content, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
         manage.client["comment"].insert(condition)
         # works表评论量+1
         doc = manage.client["works"].update({"uid": works_id}, {"$inc": {"comment_num": 1}})

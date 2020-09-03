@@ -645,3 +645,16 @@ def get_user_audit_detail(domain=constant.DOMAIN):
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def get_user_group_list():
+    """user group category"""
+    try:
+        data_list = [
+            {"name": "一般用户", "group": "comm"},
+            {"name": "认证摄影师", "group": "auth"}
+        ]
+        return response(data=data_list)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
