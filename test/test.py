@@ -343,6 +343,5 @@ temp = {
 # print(trade_data["trade_id"])
 
 
-test = [1, 3, 45, 6]
-test.insert(10, 77)
-print(test)
+mobile = "17725021251"
+print(mobile[-4:])

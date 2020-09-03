@@ -144,8 +144,8 @@ def put_user_group():
     """移动用户组"""
     try:
         # 参数
-        user_id = request.json.get('user_id')  # array 
-        group = request.json.get('group') # comm一般用户，auth认证摄影师
+        user_id = request.json.get("user_id")  # array 
+        group = request.json.get("group") # comm一般用户，auth认证摄影师
         if not user_id:
             return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
         if group not in ["comm", "auth"]:

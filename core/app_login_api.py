@@ -181,10 +181,10 @@ def post_register(nick_limit=8):
 
         # 用户密码加密
         password_b64 = base64.b64encode(str(password).encode()).decode()
-
+        nick = "微图" + str(mobile)[-4:]
         # 条件
         condition = {
-            "uid": str(uid), "nick": "微图", "sex": "保密", "age": 20, "mobile": str(mobile), "password": password_b64, "head_img_url": "", "state": 1, "account": str(mobile), "auth": 0,
+            "uid": str(uid), "nick": nick, "sex": "保密", "age": 20, "mobile": str(mobile), "password": password_b64, "head_img_url": "", "state": 1, "account": str(mobile), "auth": 0,
             "type": "user", "balance": float(0), "works_num":0, "group": "comm", "label": [], "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "login_time": int(time.time() * 1000),
             "sign": "欢迎来使用趣图，快来更新您的签名吧！"
         }

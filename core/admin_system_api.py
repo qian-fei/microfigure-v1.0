@@ -126,6 +126,9 @@ def post_create_account():
             return response(msg="请输入正确的手机号", code=1)
         if not role:
             return response(msg="Bad Request: Miss params: 'role'.", code=1, status=400)
+        doc = manage.client["user"].find_one({"account": account})
+        if doc:
+            return response(msg="账号已经存在", code=1)
         uid = base64.b64encode(os.urandom(32)).decode()
         password = "123456"
         password_b64 = base64.b64encode(str(password).encode()).decode()

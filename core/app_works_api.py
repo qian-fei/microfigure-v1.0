@@ -263,8 +263,8 @@ def get_user_history_label(label_max=20):
         # 查询
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
-            {"$project": {"_id": 0, "state": 0, "user_id": 0, "update_time": 0}},
-            {"$sort": SON([("create_time", -1)])},
+            {"$project": {"_id": 0, "state": 0, "user_id": 0, "create_time": 0}},
+            {"$sort": SON([("update_time", -1)])},
             {"$limit": label_max}
         ]
         cursor = manage.client["history_label"].aggregate(pipeline)
@@ -705,6 +705,8 @@ def post_user_add_label():
             doc = manage.client["history_label"].find_one({"user_id": user_id, "label": i})
             if not doc:
                 manage.client["history_label"].insert(condition)
+            else:
+                manage.client["history_label"].update_one({"user_id": user_id, "label": i}, {"$set": {"update_time": int(time.time() * 1000)}})
         return response()
     except Exception as e:
         manage.log.error(e)
