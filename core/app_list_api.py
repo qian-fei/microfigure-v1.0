@@ -27,7 +27,7 @@ from constant import constant
 
 
 
-def total_list_api(user_id, page, num, sort_field, sort_way, recommend, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
+def total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp=None, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
     """
     综合页推荐查询调用接口
     :param user_id: 用户id
@@ -47,11 +47,12 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, is_recom
         today_timestamp = int(time.mktime(today.timetuple())) * 1000
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 推荐作品
-        cursor = manage.client["works"].find({"is_recommend": True, "state": 2, "like_num": {"$gt": like_max}}, {"_id": 0}).skip(int(page) - 1).limit(1)
-        doc = [doc for doc in cursor]
+        # cursor = manage.client["works"].find({"is_recommend": True, "state": 2}, {"_id": 0}).skip(int(page) - 1).limit(1)
+        # doc = [doc for doc in cursor]
         # TODO 综合作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
         pipeline = [
-            {"$match": {"state": 2, "is_recommend": True if recommend else False}}, # "like_num": {"$gt": like_max}
+            {"$match": {"state": 2, "is_recommend" if recommend else "null": True if recommend else None, "like_num" if sort_field == "default" else "null": {"$gt": like_max} if sort_field == "default" else None, 
+                        "uid" if temp else "null": {"$nin": temp} if temp else None}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
@@ -71,23 +72,23 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, is_recom
         ]
         # 是否推荐
         if not recommend:
-            skip = {"$skip": (int(page) - 1) * ((int(num) - 1) if doc else (int(page) - 1) * int(num))}
-            limit = {"$limit": ((int(num) - 1) if doc else int(num))}
+            skip = {"$skip": (int(page) - 1) * int(num)}
+            limit = {"$limit": (int(num) - 1)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
         else:
-            limit = {"$limit": recomm_max}
-            pipeline.append(limit)
+            sample = {"$sample": {"size": recomm_max}} # 随机选择一个文档输出
+            pipeline.append(sample)
         # 排序
         if sort_field != "default": pipeline.append({"$sort": SON([("create_time", int(sort_way))])})
         cursor = manage.client["works"].aggregate(pipeline)
-        return cursor, doc
+        return cursor
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def pic_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
+def pic_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
     """
     图集推荐查询调用接口
     :param user_id: 用户id
@@ -108,10 +109,10 @@ def pic_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=Fa
         today_timestamp = int(time.mktime(today.timetuple())) * 1000
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 推荐作品
-        condition = {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}
-        if label != "default": condition.update({"label": label})
-        cursor = manage.client["works"].find(condition, {"_id": 0}).skip(int(page) - 1).limit(1)
-        doc = [doc for doc in cursor]
+        # condition = {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": True}
+        # if label != "default": condition.update({"label": label})
+        # cursor = manage.client["works"].find(condition, {"_id": 0}).skip(int(page) - 1).limit(1)
+        # doc = [doc for doc in cursor]
         # 图集数据
         pipeline = [
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
@@ -128,31 +129,32 @@ def pic_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=Fa
 
         # 是否推荐
         if not recommend:
-            skip = {"$skip": (int(page) - 1) * ((int(num) - 1) if doc else (int(page) - 1) * int(num))}
-            limit = {"$limit": ((int(num) - 1) if doc else int(num))}
+            skip = {"$skip": (int(page) - 1) * int(num)}
+            limit = {"$limit": (int(num) - 1)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
             # "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
-            match_data = {"$match": {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": False, "like_num": {"$gt": like_max}}}
+            match_data = {"$match": {"type": {"$in": ["tp", "tj"]}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None, 
+                                     "uid" if temp else "null": {"$nin": temp} if temp else None}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
                 pipeline.append({"$sort": SON([("browse_num", int(sort_way))])})
         else:
-            match_data = {"$match": {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}}
+            match_data = {"$match": {"type": {"$in": ["tp", "tj"]}, "state": 2, "is_recommend": True}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
             pipeline.append({"$skip": int(page) - 1})
-            pipeline.append({"$limit": recomm_max})
+            pipeline.append({"$sample": {"size": recomm_max}}) # 随机选择一个文档输出
         # 排序
         pipeline.insert(0, match_data)
         cursor = manage.client["works"].aggregate(pipeline)
-        return cursor, doc
+        return cursor
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
+def video_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is_recommend=False, like_max=1, recomm_max=1, domain=constant.DOMAIN):
     """
     影集推荐查询接口
     :param user_id: 用户id
@@ -172,10 +174,10 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=
         today_timestamp = int(time.mktime(today.timetuple())) * 1000
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # 推荐作品
-        condition = {"type": "yj", "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}
-        if label != "default": condition.update({'label': label})
-        cursor = manage.client["works"].find(condition, {"_id": 0}).skip(int(page) - 1).limit(1)
-        doc = [doc for doc in cursor]
+        # condition = {"type": "yj", "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}
+        # if label != "default": condition.update({'label': label})
+        # cursor = manage.client["works"].find(condition, {"_id": 0}).skip(int(page) - 1).limit(1)
+        # doc = [doc for doc in cursor]
         # 图集数据
         pipeline = [
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
@@ -195,25 +197,26 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, is_recommend=
         ]
                 # 是否推荐
         if not recommend:
-            skip = {"$skip": (int(page) - 1) * ((int(num) - 1) if doc else (int(page) - 1) * int(num))}
-            limit = {"$limit": ((int(num) - 1) if doc else int(num))}
+            skip = {"$skip": (int(page) - 1) * int(num)}
+            limit = {"$limit": (int(num) - 1)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
             # TODO "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
-            match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "is_recommend": False, "like_num": {"$gt": like_max}}}
+            match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None,
+                                     "uid" if temp else "null": {"$nin": temp} if temp else None}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
                 pipeline.append({"$sort": SON([("browse_num", int(sort_way))])})
         else:
-            match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "is_recommend": True, "like_num": {"$gt": like_max}}}
+            match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "is_recommend": True}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
             pipeline.append({"$skip": int(page) - 1})
-            pipeline.append({"$limit": recomm_max})
+            pipeline.append({"$sample": {"size": recomm_max}}) # 随机选择一个文档输出
         # 排序
         pipeline.insert(0, match_data)
         cursor = manage.client["works"].aggregate(pipeline)
-        return cursor, doc
+        return cursor
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
@@ -265,7 +268,7 @@ def get_banner(banner_max=3, domain=constant.DOMAIN):
         pipeline =[
             {"$match": {"state": 1}},
             {"$sort": SON([("order", 1)])},
-            {"$limit": banner_max},
+            # {"$limit": banner_max},
             {"$project": {"_id": 0, "pic_url": {"$concat": [domain, "$pic_url"]}, "order": 1, "link": 1}}
         ]
         cursor = manage.client["banner"].aggregate(pipeline)
@@ -361,15 +364,20 @@ def get_total_list():
 
         recommend = False
         # 未推荐作品
-        cursor, doc = total_list_api(user_id, page, num, sort_field, sort_way, recommend)
-        data_list = [doc for doc in cursor]
+        cursor= total_list_api(user_id, page, num, sort_field, sort_way, recommend)
+        data_list = []
+        temp = []
+        for doc in cursor:
+            data_list.append(doc)
+            temp.append(doc.get("uid"))
         # 推荐作品
-        if doc and data_list:
+        if data_list:
             recommend = True
-            cursor, _ = total_list_api(user_id, page, num, sort_field, sort_way, recommend)
-            doc = [doc for doc in cursor][0]
-            random_num = random.randint(0, int(num))
-            data_list.insert(random_num, doc)
+            cursor = total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp)
+            temp_list = [doc for doc in cursor]
+            if temp_list:
+                random_num = random.randint(0, int(num))
+                data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -498,15 +506,20 @@ def get_pic_list():
 
         recommend = False
         # 未推荐作品
-        cursor, doc = pic_list_api(user_id, page, num, label, sort_way, recommend)
-        data_list = [doc for doc in cursor]
+        cursor= pic_list_api(user_id, page, num, label, sort_way, recommend)
+        data_list = []
+        temp = []
+        for doc in cursor:
+            data_list.append(doc)
+            temp.append(doc.get("uid"))
         # 推荐作品
-        if doc and data_list:
+        if data_list:
             recommend = True
-            cursor, _ = pic_list_api(user_id, page, num, label, sort_way, recommend)
-            doc = [doc for doc in cursor][0]
-            random_num = random.randint(0, int(num))
-            data_list.insert(random_num, doc)
+            cursor= pic_list_api(user_id, page, num, label, sort_way, recommend, temp)
+            temp_list = [doc for doc in cursor]
+            if temp_list:
+                random_num = random.randint(0, int(num))
+                data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -566,15 +579,20 @@ def get_video_list():
 
         recommend = False
         # 未推荐作品
-        cursor, doc = video_list_api(user_id, page, num, label, sort_way, recommend)
-        data_list = [doc for doc in cursor]
+        cursor= video_list_api(user_id, page, num, label, sort_way, recommend)
+        data_list = []
+        temp = []
+        for doc in cursor:
+            data_list.append(doc)
+            temp.append(doc.get("uid"))
         # 推荐作品
-        if doc and data_list:
+        if data_list:
             recommend = True
-            cursor, _ = video_list_api(user_id, page, num, label, sort_way, recommend)
-            doc = [doc for doc in cursor][0]
-            random_num = random.randint(0, int(num))
-            data_list.insert(random_num, doc)
+            cursor= video_list_api(user_id, page, num, label, sort_way, recommend, temp)
+            temp_list = [doc for doc in cursor]
+            if temp_list:
+                random_num = random.randint(0, int(num))
+                data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -946,7 +964,7 @@ def get_comment_list(domain=constant.DOMAIN):
             return response(msg="Bad Request: Miss params: 'works_id'.", code=1, status=400)
         # 查询数据
         pipeline = [
-            {"$match": {"works_id": works_id, "state": 1}},
+            {"$match": {"works_id": works_id, "state": {"$ne": -1}}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -1111,7 +1129,7 @@ def get_option_label(label_max=20):
         if type not in ["pic", "video"]:
             return response(msg="Bad Request: The parameter 'type' is incorrect", code=1, status=400)
         # 查询数据库
-        cursor = manage.client["label"].find({"priOrity": 0, "state": 1, "type": type}, {"_id": 0, "label": 1}).limit(label_max)
+        cursor = manage.client["label"].find({"priority": 0, "state": 1, "type": type}, {"_id": 0, "label": 1}).limit(label_max)
         data_list = [doc["label"] for doc in cursor]
         return response(data=data_list)
     except Exception as e:

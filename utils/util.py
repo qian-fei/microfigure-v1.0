@@ -24,8 +24,10 @@ import whatimage # heic转jpg  pip install whatimage
 # import pyheif # heic转jpg pip install pyheif
 import traceback # heic转jpg
 from manage import *
-from PIL import Image
-
+from PIL import Image, ImageFile
+# 图片太大超过ImageFile设置的MAXBLOCK上限，需要截掉一部分
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+# ImageFile.MAXBLOCK = 999999999999 # 需要将Image能处理的文件上限设置非常大
 
 def response(data=None, msg="Request successful.", code=0, status=200):
     """

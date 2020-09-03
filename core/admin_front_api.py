@@ -106,9 +106,15 @@ def put_banner_state():
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
-def post_upload_banner():
-    """上传banner图"""
+def post_upload_banner(banner_max=10):
+    """
+    上传banner图
+    :param banner_max: banner上限
+    """
     try:
+        count = manage.client["banner"].find({}).count()
+        if count > banner_max:
+            return response(msg=f"最多支持{banner_max}张轮播图片")
         user_id = g.user_data["user_id"]
         data_list = pic_upload_api(user_id)
         file_path = data_list[0]["file_path"]
@@ -129,7 +135,7 @@ def get_hot_keyword_list(limit=10):
     try:
         # 获取数据
         pipeline = [
-            {"$match": {"state": {"$ne": -1}}},
+            {"$match": {"state": 1}},
             {"$group": {"_id": {"keyword": "$keyword"}, "count": {"$sum": 1}}},
             {"$project": {"_id": 0, "keyword": "$_id.keyword", "count": 1}},
             {"$sort": SON([("count", -1)])},
@@ -156,11 +162,11 @@ def post_add_keyword():
         if not keyword:
             return response(msg="Bad Request: Miss params: 'keyword'", code=1, status=400)
         # 添加
-        doc = manage.client["user_search"].find_one({"user_id": user_id, "keyword": keyword})
+        doc = manage.client["user_search"].find_one({"keyword": keyword, "state": {"$ne": -1}})
         if not doc:
             manage.client["user_search"].insert({"user_id": user_id, "keyword": keyword, "state": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         else:
-            return response(msg="关键词已存在，请勿重复添加", code=1)
+            return response(msg="关键词已存在", code=1)
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -205,6 +211,7 @@ def get_label_list():
             {"$match": {"state": {"$ne": -1}, "type": type}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
+            {"$sort": SON([("priority", -1)])},
             {"$project": {"_id": 0, "create_time": 0, "update_time": 0}}
         ]
         cursor = manage.client["label"].aggregate(pipeline)
@@ -229,7 +236,7 @@ def put_lable_priority():
             return response(msg="Bad Request: Miss params: 'priority'.", code=1, status=400)
         if not label_id:
             return response(msg="Bad Request: Miss params: 'label_id'.", code=1, status=400)
-        doc = manage.client["label"].update({"uid": label_id}, {"$set": {"priority": priority}})
+        doc = manage.client["label"].update({"uid": label_id}, {"$set": {"priority": float(priority)}})
         if doc["n"] == 0:
             return response(msg="Updated failed.", code=1, status=400)
         return response()

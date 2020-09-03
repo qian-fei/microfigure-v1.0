@@ -240,14 +240,21 @@ def get_user_follow_works(domain=constant.DOMAIN):
         # 查询数据
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
-            {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
-                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$unset": ["works_item._id"]},
-            {"$project": {"_id": 0, "user_id": 1}}
+            # {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
+            #              "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
+            # {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            # {"$unset": ["works_item._id"]},
+            {"$project": {"_id": 0, "user_id": 1, "last_look_time": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
-        user_list = [doc["user_id"] for doc in cursor]
+        user_list = []
+        n = 0
+        last_look_time = int(time.time() * 1000)
+        for doc in cursor:
+            user_list.append(doc["user_id"])
+            if n == 0:
+                last_look_time = doc["last_look_time"]
+                n += 1
         pipeline = [
             {"$match": {"user_id": {"$in": user_list}}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
@@ -265,14 +272,15 @@ def get_user_follow_works(domain=constant.DOMAIN):
                             "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
                             "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
+            {"$sort": SON([("create_time", -1)])},
             {"$project": {"_id": 0}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        count = len(data_list)
+        count = manage.client["works"].find({"user_id": {"$in": user_list}, "create_time": {"$gte": last_look_time}}).count()
         data["count"] = count
         data["works_list"] = data_list
-        doc = manage.client["follow"].update({"user_id": {"$in": user_list}}, {"$set": {"last_look_time": int(time.time() * 1000)}})
+        doc = manage.client["follow"].update({"user_id": {"$in": user_list}, "fans_id": user_id}, {"$set": {"last_look_time": int(time.time() * 1000)}})
         if not doc:
             return response(msg="'last_look_time' update failed.", code=1, status=400)
         return response(data=data)
@@ -313,19 +321,33 @@ def get_userinfo(domain=constant.DOMAIN):
         order_count = manage.client["order"].find({"user_id": user_id, "state": 0}).count()
         # 关注用户的作品动态数
         # 查询数据
+        # pipeline = [
+        #     {"$match": {"fans_id": user_id, "state": 1}},
+        #     {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
+        #                  "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
+        #     {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+        #     {"$unset": ["works_item._id"]},
+        #     {"$count": "count"}
+        # ]
+        # cursor = manage.client["follow"].aggregate(pipeline)
+        # data = [doc for doc in cursor]
+        # dynamic_count = 0
+        # if data:
+        #     dynamic_count = data[0]["count"]
         pipeline = [
             {"$match": {"fans_id": user_id, "state": 1}},
-            {"$lookup": {"from": "works", "let": {"user_id": "$user_id", "last_time": "$last_look_time"}, 
-                         "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "create_time": {"$gte": "$$last_time"}}}], "as": "works_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$unset": ["works_item._id"]},
-            {"$count": "count"}
+            {"$project": {"_id": 0, "user_id": 1, "last_look_time": 1}}
         ]
         cursor = manage.client["follow"].aggregate(pipeline)
-        data = [doc for doc in cursor]
-        dynamic_count = 0
-        if data:
-            dynamic_count = data[0]["count"]
+        user_list = []
+        n = 0
+        last_look_time = int(time.time() * 1000)
+        for doc in cursor:
+            user_list.append(doc["user_id"])
+            if n == 0:
+                last_look_time = doc["last_look_time"]
+                n += 1
+        dynamic_count = manage.client["works"].find({"user_id": {"$in": user_list}, "create_time": {"$gte": last_look_time}}).count()
         user_info["order_count"] = order_count
         user_info["dynamic_count"] = dynamic_count
         return response(data=user_info)
@@ -2214,7 +2236,7 @@ def get_download_authorized_contract(domain=constant.DOMAIN):
             raise Exception("Lack of authorization contract")
         file_path = doc["file_path"]
         content = doc["content"]
-        data["file_path"] = "http://192.168.1.183:8080" + file_path
+        data["file_path"] = domain + file_path
         data["content"] = content
         return response(data=data)
     except Exception as e:

@@ -338,6 +338,11 @@ temp = {
 # for doc in rest:
 #     print(doc)\
 
-trade_data = {"trade_id": ["0"], "balance": 3, "trade_amount": 3}
+# trade_data = {"trade_id": ["0"], "balance": 3, "trade_amount": 3}
 
-print(trade_data["trade_id"])
+# print(trade_data["trade_id"])
+
+
+test = [1, 3, 45, 6]
+test.insert(10, 77)
+print(test)

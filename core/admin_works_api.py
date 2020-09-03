@@ -55,11 +55,11 @@ def get_admin_pic_material_list(search_max=32, domain=constant.DOMAIN):
             return response(msg=f"搜索内容最长{search_max}个字符，请重新输入", code=1)
         # 查询
         pipeline = [
-            {"$match": {"state": 1, ("title" if category == "title" else "nick") if content else "null": {"$regex": content} if content else None}},
+            {"$match": {"state": 1, ("title" if category == "title" else ("label" if category == "label" else "null")) if content else "null": ({"$regex": content} if category == "title" else (content if category == "label" else None)) if content else None}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick"}},
-            {"$match": {"nick" if category == "nick" else "null": {"$regex": content} if content else None}},
+            {"$match": {("nick" if category == "nick" else "null") if content else "null": ({"$regex": content} if category == "nick" else None) if content else None}},
             {"$unset": ["user_item", "user_info"]},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
@@ -69,11 +69,11 @@ def get_admin_pic_material_list(search_max=32, domain=constant.DOMAIN):
         cursor = manage.client["pic_material"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
         condition = pipeline = [
-            {"$match": {"state": 1, ("title" if category == "title" else "nick") if content else "null": {"$regex": content} if content else None}},
+            {"$match": {"state": 1, ("title" if category == "title" else ("label" if category == "label" else "null")) if content else "null": ({"$regex": content} if category == "title" else (content if category == "label" else None)) if content else None}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick"}},
-            {"$match": {"nick" if category == "nick" else "null": {"$regex": content} if content else None}},
+            {"$match": {("nick" if category == "nick" else "null") if content else "null": ({"$regex": content} if category == "nick" else None) if content else None}},
             {"$count": "count"}
         ]
         cursor = manage.client["pic_material"].aggregate(pipeline)
@@ -362,12 +362,12 @@ def get_all_works_list(domain=constant.DOMAIN, search_max=32):
             return response(msg="Bad Request: Params 'type' is error.", code=1, status=400)
         # 查询
         pipeline = [
-            {"$match": {("title" if category == "title" else "nick") if content else "null": {"$regex": content} if content else None, "type": type,
-                        "state": int(state) if state != "4" else {"$ne": -1}}},
+            {"$match": {("title" if category == "title" else ("label" if category == "label" else "null")) if content else "null": ({"$regex": content} if category == "title" else (content if category == "label" else None)) if content else None, 
+                         "type": type, "state": int(state) if state != "4" else {"$ne": -1}}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick"}},
-            {"$match": {"nick" if category == "nick" else "null": {"$regex": content} if content else None}},
+            {"$match": {("nick" if category == "nick" else "null") if content else "null": ({"$regex": content} if category == "nick" else None) if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
@@ -381,12 +381,12 @@ def get_all_works_list(domain=constant.DOMAIN, search_max=32):
         data_list = [doc for doc in cursor]
         # 统计总数用于分页
         pipeline = pipeline = [
-            {"$match": {("title" if category == "title" else "nick") if content else "null": {"$regex": content} if content else None, "type": type,
-                        "state": int(state) if state != "4" else {"$ne": -1}}},
+            {"$match": {("title" if category == "title" else ("label" if category == "label" else "null")) if content else "null": ({"$regex": content} if category == "title" else (content if category == "label" else None)) if content else None, 
+                         "type": type, "state": int(state) if state != "4" else {"$ne": -1}}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick"}},
-            {"$match": {"nick" if category == "nick" else "null": {"$regex": content} if content else None}},
+            {"$match": {("nick" if category == "nick" else "null") if content else "null": ({"$regex": content} if category == "nick" else None) if content else None}},
             {"$count": "count"}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
@@ -503,9 +503,14 @@ def get_works_audit_list(search_max=32, domain=constant.DOMAIN):
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        condition = {("title" if category == "title" else "account") if content else "null": {"$regex": content} if content else None, "type": type, "state": 1}
-        count = manage.client["works"].find(condition).count()
-        data["count"] = count
+        pipeline = [
+             {"$match": {("title" if category == "title" else "account") if content else "null": {"$regex": content} if content else None, 
+                          "type" if type != "default" else "null": type if type != "default" else None, "state": 1}},
+            {"$count": "count"}
+        ]
+        cursor = manage.client["works"].aggregate(pipeline)
+        count = [doc for doc in cursor]
+        data["count"] = count[0]["count"] if count else 0
         data["list"] = data_list if data_list else []
         return response(data=data)
     except Exception as e:

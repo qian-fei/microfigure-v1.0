@@ -398,7 +398,7 @@ def post_create_pic_works(label_max=9, title_max=32):
                 doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
                 if doc["n"] == 0:
                     id = base64.b64encode(os.urandom(16)).decode()
-                    manage.client["label"].insert({"uid": id, "priority": 0.0, "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                    manage.client["label"].insert({"uid": id, "priority": float(0), "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
                 data = {
                     "pic_id": uid,
                     "works_id": wroks_uid
@@ -480,7 +480,7 @@ def post_pic_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=const
             doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
             if doc["n"] == 0:
                 id = base64.b64encode(os.urandom(16)).decode()
-                manage.client["label"].insert({"uid": id, "priority": 0, "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                manage.client["label"].insert({"uid": id, "priority": float(0), "type": "pic", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         data = {
             "pic_id": pic_id_list[0],
             "works_id": uid
@@ -634,7 +634,7 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
         if not pic_id_list:
             return response(msg="Bad Request: Miss param 'pic_id_list'.", code=1, status=400)
         if len(pic_id_list) <= 1:
-            return response(msg="图集至少2张图片", code=1)
+            return response(msg="影集至少2张图片", code=1)
         if len(pic_id_list) > pic_id_max:
             return response(msg=f"最多允许选择{pic_id_max}张图片", code=1)
         if not me_works_id:
@@ -678,7 +678,7 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
             doc = manage.client["label"].update({"label": i}, {"$inc": {"works_num": 1}})
             if doc["n"] == 0:
                 id = base64.b64encode(os.urandom(16)).decode()
-                manage.client["label"].insert({"uid": id, "priority": 0, "type": "video", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+                manage.client["label"].insert({"uid": id, "priority": float(0), "type": "video", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         data = {
             "pic_id": pic_id_list[0],
             "works_id": me_works_id
