@@ -643,9 +643,10 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
         cover_url = cover_url.replace(domain, "")
         number = genrate_file_number()
         keyword = list(jieba.cut(title))
-        condition = {"uid": me_works_id, "user_id": user_id, "pic_id": pic_id_list, "type": "yj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
+        uid = base64.b64encode(os.urandom(32)).decode()
+        condition = {"uid": uid, "user_id": user_id, "pic_id": pic_id_list, "type": "yj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
                      "label": label, "state": 0, "is_recommend": False, "is_portrait": False, "is_products": False, "pic_num": len(pic_id_list), "like_num": 0, "comment_num": 0, 
-                     "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+                     "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000), "me_id": me_works_id
         }
         manage.client["works"].insert(condition)
         # 更新作品数

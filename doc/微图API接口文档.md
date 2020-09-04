@@ -672,6 +672,7 @@ GET
 | update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                                                   |
 |  is_follow   |  是  | Boolean  | 是否关注   | true已关注，false未关注                                      |
 |   is_like    |  是  | Boolean  | 是否点赞   | true已点赞，false未点赞                                      |
+|    me_id     |  是  |  String  | me作品id   |                                                              |
 
 返回示例：
 
@@ -680,6 +681,7 @@ GET
 	"data": 
        {	// 图片信息
            "uid": "123456",	// 作品唯一id
+           "me_id": "hfafnag",
            "pic_item": [{
            		"uid": "7893432",	// 图片唯一id
            		"works_id": "123456", // 作品id

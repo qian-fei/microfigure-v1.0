@@ -493,7 +493,7 @@ def get_withdrawal_records_export(delta_time=30, domain=constant.DOMAIN):
             "trade_name": "支付姓名",
         }
         if not data_list:
-            return response(msg="当前记录为空，无法导出")
+            return response(msg="当前记录为空", code=1)
         export = ExportExcle(temp, "提现记录")
         path = export.export_excle(data_list, "export", "order")
         return response(data=domain + path)
@@ -558,7 +558,7 @@ def get_order_recharge_export(delta_time=30, domain=constant.DOMAIN):
             "trade_id": "支付交易号",
         }
         if not data_list:
-            return response(msg="当前记录为空，无法导出")
+            return response(msg="当前记录为空", code=1)
         export = ExportExcle(temp, "充值记录")
         path = export.export_excle(data_list, "export", "order")
         return response(data=domain + path)
@@ -621,7 +621,7 @@ def get_withdrawal_records_audit_export(delta_time=30, domain=constant.DOMAIN):
             "trade_name": "支付姓名",
         }
         if not data_list:
-            return response(msg="当前记录为空，无法导出")
+            return response(msg="当前记录为空", code=1)
         export = ExportExcle(temp, "申请提现记录")
         path = export.export_excle(data_list, "export", "order")
         return response(data=domain + path)

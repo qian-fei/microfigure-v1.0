@@ -37,14 +37,18 @@ def get_banner(domain=constant.DOMAIN):
         # 获取数据
         pipeline = [
             {"$match": {"state": 1}},
+            {"$sort": SON([("order", -1)])},
             {"$project": {"_id": 0, "uid": 1, "link": 1, "order": 1, "pic_url": {"$concat": [domain, "$pic_url"]}, 
                           "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
                           "update_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$update_time"]}}}}}
         ]
         cursor = manage.client["banner"].aggregate(pipeline)
-        data_list = [doc for doc in cursor]
-        if not data_list:
-            raise Exception("No data in the database")
+        data_list = []
+        i = 1
+        for doc in cursor:
+            doc["order"] = i
+            i += 1
+            data_list.append(doc)
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -57,8 +61,8 @@ def put_banner_link():
         # 获取数据
         link = request.json.get("link")
         banner_id = request.json.get("banner_id")
-        if not link:
-            return response(msg="Bad Request: Miss params: 'link'.", code=1, status=400)
+        # if not link:
+        #     return response(msg="Bad Request: Miss params: 'link'.", code=1, status=400)
         if not banner_id:
             return response(msg="Bad Request: Miss params: 'banner_id'", code=1, status=400)
         # 更新link
