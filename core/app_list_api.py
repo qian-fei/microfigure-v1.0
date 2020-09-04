@@ -51,7 +51,8 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp=Non
         # doc = [doc for doc in cursor]
         # TODO 综合作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
         pipeline = [
-            {"$match": {"state": 2, "is_recommend" if recommend else "null": True if recommend else None, "like_num" if sort_field == "default" else "null": {"$gt": like_max} if sort_field == "default" else None, 
+            {"$match": {"state": 2, "is_recommend" if sort_field != "default" or recommend else "null": False if sort_field != "default" else (True if recommend else None), 
+                        "like_num" if sort_field == "default" else "null": {"$gt": like_max} if sort_field == "default" else None, 
                         "uid" if temp else "null": {"$nin": temp} if temp else None}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -73,7 +74,7 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp=Non
         # 是否推荐
         if not recommend:
             skip = {"$skip": (int(page) - 1) * int(num)}
-            limit = {"$limit": (int(num) - 1)}
+            limit = {"$limit": (int(num) - 1) if temp else int(num)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
         else:
@@ -130,12 +131,12 @@ def pic_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is_r
         # 是否推荐
         if not recommend:
             skip = {"$skip": (int(page) - 1) * int(num)}
-            limit = {"$limit": (int(num) - 1)}
+            limit = {"$limit": (int(num) - 1) if temp else int(num)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
             # "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
             match_data = {"$match": {"type": {"$in": ["tp", "tj"]}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None, 
-                                     "uid" if temp else "null": {"$nin": temp} if temp else None}}
+                                     "uid" if temp else "null": {"$nin": temp} if temp else None, "is_recommend" if label != "default" else "null": False if label != "default" else None}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
                 pipeline.append({"$sort": SON([("browse_num", int(sort_way))])})
@@ -198,12 +199,12 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is
                 # 是否推荐
         if not recommend:
             skip = {"$skip": (int(page) - 1) * int(num)}
-            limit = {"$limit": (int(num) - 1)}
+            limit = {"$limit": (int(num) - 1) if temp else int(num)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
             # TODO "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
             match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None,
-                                     "uid" if temp else "null": {"$nin": temp} if temp else None}}
+                                     "uid" if temp else "null": {"$nin": temp} if temp else None, "is_recommend" if label != "default" else "null": False if label != "default" else None}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
                 pipeline.append({"$sort": SON([("browse_num", int(sort_way))])})
@@ -361,23 +362,22 @@ def get_total_list():
             return response(msg="Bad Request: Parameter error: 'sort_way'.", code=1, status=400)
         if sort_field not in ["default", "time"]:
             return response(msg="Bad Request: Parameter error: 'sort_field'.", code=1, status=400)
-
-        recommend = False
-        # 未推荐作品
-        cursor= total_list_api(user_id, page, num, sort_field, sort_way, recommend)
-        data_list = []
         temp = []
-        for doc in cursor:
-            data_list.append(doc)
-            temp.append(doc.get("uid"))
-        # 推荐作品
-        if data_list:
+        if sort_field == "default":
             recommend = True
-            cursor = total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp)
-            temp_list = [doc for doc in cursor]
-            if temp_list:
-                random_num = random.randint(0, int(num))
-                data_list.insert(random_num, temp_list[0])
+            # 未推荐作品
+            cursor= total_list_api(user_id, page, num, sort_field, sort_way, recommend)
+            temp_list = []
+            for doc in cursor:
+                temp_list.append(doc)
+                temp.append(doc.get("uid"))
+        # 推荐作品
+        recommend = False
+        cursor = total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp)
+        data_list = [doc for doc in cursor]
+        if temp:
+            random_num = random.randint(0, int(num))
+            data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -452,7 +452,7 @@ def get_article_list(domain=constant.DOMAIN):
         yesterday_timestamp = int(time.mktime(yesterday.timetuple())) * 1000
         # TODO 图文作品 "$and":[{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}],
         pipeline = [
-            {"$match": {"state": 2, "type": "tw"}},
+            {"$match": {"state": 2, "type": "tw", "like_num" if sort_field == "default" else "null": {"$gt": 1} if sort_field == "default" else None}},
             {"$lookup": {"from": "blacklist", "let": {"user": user_id, "uid": "$uid"}, 
                          "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$user_id","$$user"]}, {"$in": ["$black_id", ["$$uid", "$$user"]]}]}}}], "as": "black_item"}},
             {"$match": {"black_item": {"$eq": []}}},                                                                                                      
@@ -504,22 +504,22 @@ def get_pic_list():
         if sort_way and sort_way not in ["-1", "1"]:
             return response(msg="Bad Request: Parameter error: 'sort_way'.", code=1, status=400)
 
-        recommend = False
-        # 未推荐作品
-        cursor= pic_list_api(user_id, page, num, label, sort_way, recommend)
-        data_list = []
         temp = []
-        for doc in cursor:
-            data_list.append(doc)
-            temp.append(doc.get("uid"))
-        # 推荐作品
-        if data_list:
+        if label == "default":
             recommend = True
-            cursor= pic_list_api(user_id, page, num, label, sort_way, recommend, temp)
-            temp_list = [doc for doc in cursor]
-            if temp_list:
-                random_num = random.randint(0, int(num))
-                data_list.insert(random_num, temp_list[0])
+            # 未推荐作品
+            cursor= pic_list_api(user_id, page, num, label, sort_way, recommend)
+            temp_list = []
+            for doc in cursor:
+                temp_list.append(doc)
+                temp.append(doc.get("uid"))
+        # 推荐作品
+        recommend = False
+        cursor = pic_list_api(user_id, page, num, label, sort_way, recommend, temp)
+        data_list = [doc for doc in cursor]
+        if temp:
+            random_num = random.randint(0, int(num))
+            data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
@@ -577,22 +577,22 @@ def get_video_list():
         if sort_way and sort_way not in ["-1", "1"]:
             return response(msg="Bad Request: Parameter error: 'sort_way'.", code=1, status=400)
 
-        recommend = False
-        # 未推荐作品
-        cursor= video_list_api(user_id, page, num, label, sort_way, recommend)
-        data_list = []
         temp = []
-        for doc in cursor:
-            data_list.append(doc)
-            temp.append(doc.get("uid"))
-        # 推荐作品
-        if data_list:
+        if label == "default":
             recommend = True
-            cursor= video_list_api(user_id, page, num, label, sort_way, recommend, temp)
-            temp_list = [doc for doc in cursor]
-            if temp_list:
-                random_num = random.randint(0, int(num))
-                data_list.insert(random_num, temp_list[0])
+            # 未推荐作品
+            cursor= video_list_api(user_id, page, num, label, sort_way, recommend)
+            temp_list = []
+            for doc in cursor:
+                temp_list.append(doc)
+                temp.append(doc.get("uid"))
+        # 推荐作品
+        recommend = False
+        cursor = video_list_api(user_id, page, num, label, sort_way, recommend, temp)
+        data_list = [doc for doc in cursor]
+        if temp:
+            random_num = random.randint(0, int(num))
+            data_list.insert(random_num, temp_list[0])
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
