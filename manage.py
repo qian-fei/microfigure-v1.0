@@ -1610,7 +1610,7 @@ def admin_manage_search():
 @auth_admin_login
 @auth_amdin_role
 def admin_manage_create_account():
-    """后台管理员列表搜索接口"""
+    """后台管理员创建账号接口"""
     return admin_system_api.post_create_account()
 
 

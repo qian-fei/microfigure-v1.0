@@ -728,7 +728,8 @@ def get_article_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
+            {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "cover_url": {"$concat": [domain, "$cover_url"]}, 
+                            "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
             {"$unset": ["user_item", "user_info", "follow_item"]},
             {"$project": {"_id": 0}}
         ]
@@ -1148,9 +1149,9 @@ def post_custom_label(label_max=6):
         # 用户uid
         user_id = g.user_data["user_id"]
         # 参数
-        type = request.args.get("type", None) # pic图集， video影集
-        label_list = request.json.get("label_list", None)
-        visitor_id = request.headers.get("user_id", None)
+        type = request.json.get("type") # pic图集， video影集
+        label_list = request.json.get("label_list")
+        visitor_id = request.headers.get("user_id")
         user_id = user_id if user_id else visitor_id
         # 校验
         if not type:
@@ -1159,12 +1160,16 @@ def post_custom_label(label_max=6):
             return response(msg="Bad Request: The parameter 'type' is incorrect", code=1, status=400)
         if not user_id:
             return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
-        if label_list:
+        if not label_list:
             return response(msg="请选择标签", code=1)
         if len(label_list) > label_max:
             return response(msg="标签上限6个", code=1)
         # 入库
-        manage.client["custom_label"].insert({"user_id": user_id, "type": type, "label": label, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        doc = manage.client["custom_label"].find_one({"user_id": user_id, "type": type, "state": 1})
+        if not doc:
+            manage.client["custom_label"].insert({"user_id": user_id, "type": type, "label": label_list, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        else:
+            manage.client["custom_label"].update({"user_id": user_id, "type": type, "state": 1}, {"$set": {"label": label_list, "update_time": int(time.time() * 1000)}})
         return response()
     except Exception as e:
         manage.log.error(e)

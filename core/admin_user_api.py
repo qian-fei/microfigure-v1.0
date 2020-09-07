@@ -150,12 +150,14 @@ def put_user_group():
             return response(msg="Bad Request: Miss params: 'user_id'.", code=1, status=400)
         if group not in ["comm", "auth"]:
             return response(msg="Bad Request: Params 'group' is error.", code=1, status=400)
-        doc = manage.client["user"].find_one({"uid": user_id})
-        if doc["belong"] != "master":
-            return response(msg="只有主账号才能移动组", code=1)
-        doc = manage.client["user"].update({"org_name": doc["org_name"]}, {"$set": {"group": group}}, multi=True)
-        if doc["n"] == 0:
-            return response(msg="Bad Request: Update failed.", code=1, status=400)
+        for i in user_id:
+            doc = manage.client["user"].find_one({"uid": i})
+            if doc["type"] == "org":
+                if doc["belong"] != "master":
+                    return response(msg="只有主账号才能移动组", code=1)
+                doc = manage.client["user"].update({"org_name": doc["org_name"]}, {"$set": {"group": group}}, multi=True)
+            else:
+                doc = manage.client["user"].update({"uid": i}, {"$set": {"group": group}})
         return response()
     except Exception as e:
         manage.log.error(e)

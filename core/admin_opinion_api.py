@@ -98,6 +98,7 @@ def get_report_comment_search(search_max=32, delta_time=30):
                 return response(msg=f"最多可连续查询{delta_time}天以内的评论", code=1)
         pipeline = [
             {"$match": {"state": int(state), "content" if content else "null": {"$regex": content} if content else None}},
+            {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -199,9 +200,9 @@ def post_add_bad_keyword():
             uid = base64.b64encode(os.urandom(16)).decode()
             obj = {"keyword": i, "state": 1}
             temp_list.append(obj)
-        manage.client["bad"].delete({})
-        manage.client["bad"].insert(temp_list)
+        manage.client["bad"].drop()
+        manage.client["bad"].insert_many(temp_list)
         return response()
     except Exception as e:
         manage.log.error(e)
-        return response(msg="Internal Server Error: %s.",code=1, status=500)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
