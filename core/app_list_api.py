@@ -58,7 +58,7 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp=Non
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
             {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$lookup": {"from": "browse_records", "let": {"works_id": "$uid", "user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]},
                                                                                                                                                    {"$eq": ["$user_id", user_id]}]}}}], "as": "browse_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
@@ -67,7 +67,7 @@ def total_list_api(user_id, page, num, sort_field, sort_way, recommend, temp=Non
                             "audio_info": {"$arrayElemAt": ["$audio_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", "video_url": "$video_info.video_url", 
                             "audio_url": "$audio_info.audio_url", "count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "cover_url": {"$concat": [domain, "$cover_url"]},
-                            "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+                            "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "user_item", "user_info", "browse_info", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info", "browse_item"]},
             {"$project": {"_id": 0}}
         ]
@@ -117,13 +117,13 @@ def pic_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is_r
         # 图集数据
         pipeline = [
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$lookup": {"from": "browse_records", "let": {"works_id": "$uid", "user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]},
                                                                                                                                                    {"$eq": [user_id, "$$user_id"]}]}}}], "as": "browse_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
                             "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
                             "browse_info": {"$arrayElemAt": ["$browse_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
-            {"$addFields": {"count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+            {"$addFields": {"count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "browse_info", "browse_item", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
@@ -184,7 +184,7 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
             {"$lookup": {"from": "audio_material", "let": {"audio_id": "$audio_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$audio_id"]}}}], "as": "audio_item"}},
-            {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "like_item"}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$lookup": {"from": "browse_records", "let": {"works_id": "$uid", "user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$and": [{"$eq": ["$works_id", "$$works_id"]},
                                                                                                                                                    {"$eq": [user_id, "$$user_id"]}]}}}], "as": "browse_item"}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
@@ -192,7 +192,7 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is
                             "browse_info": {"$arrayElemAt": ["$browse_item", 0]}, "video_info": {"$arrayElemAt": ["$video_item", 0]}, "audio_info": {"$arrayElemAt": ["$audio_item", 0]}, 
                             "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"count": {"$cond": {"if": {"$in": [user_id, "$browse_item.user_id"]}, "then": 1, "else": 0}}, "video_url": "$video_info.video_url", "audio_url": "$audio_info.audio_url", 
-                            "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
+                            "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}}}},
             {"$unset": ["pic_temp_item", "browse_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
@@ -289,8 +289,8 @@ def get_label_kw(kw_max=5, label_max=5):
     data = {}
     try:
         # 参数
-        type = request.args.get("type", None) # pic图集 video影集
-        user_id = g.user_data["user_id"]  # 用户登录时, 必须传type; 未登录时可不传
+        type = request.args.get("type") # pic图集 video影集
+        user_id = g.user_data["user_id"]
         # 校验
         if not type:
             return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
@@ -719,7 +719,8 @@ def get_article_detail(domain=constant.DOMAIN):
         # 用户uid
         user_id = g.user_data["user_id"]
         # 获取uid
-        uid = request.args.get("uid", None)
+        uid = request.args.get("uid")
+        dont_record = request.args.get("dont_record")
         if not uid:
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
         pipeline = [
@@ -735,8 +736,9 @@ def get_article_detail(domain=constant.DOMAIN):
         data = [doc for doc in cursor]
         if not data:
             return response(msg="Bad Request: Params 'uid' is error.", code=1, status=400)
-        # 浏览数+1
-        works_browse_records_api(uid)
+        if not dont_record:
+            # 浏览数+1
+            works_browse_records_api(uid)
         return response(data=data[0] if data else None)
     except Exception as e:
         manage.log.error(e)

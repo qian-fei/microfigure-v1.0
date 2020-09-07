@@ -760,9 +760,7 @@ def get_article_works_detail(domain=constant.DOMAIN):
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data = [doc for doc in cursor]
-        if not data:
-            return response(msg="Article data does not exist", code=1, status=400)
-        return response(data=data[0])
+        return response(data=data[0] if data else None)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)

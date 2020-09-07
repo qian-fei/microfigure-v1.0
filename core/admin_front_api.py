@@ -150,7 +150,7 @@ def get_hot_keyword_list(limit=10):
         # 推荐关键词
         cursor = manage.client["user_search"].find({"state": 0}, {"_id": 0, "keyword": 1})
         recomm_list = [doc["keyword"] for doc in cursor]
-        data_list = hot_list + recomm_list
+        data_list = list(set(hot_list + recomm_list))
         return response(data=data_list)
     except Exception as e:
         manage.log.error(e)
