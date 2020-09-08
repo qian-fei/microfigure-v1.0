@@ -305,7 +305,7 @@ def get_label_kw(kw_max=5, label_max=5):
             last_one_timestamp = int(time.mktime(last_one_time.timetuple())) * 1000
             # 查询条件
             pipeline = [
-                # {"$match": {"$and":[{"create_time": {"$gte": last_one_timestamp}}, {"create_time": {"$lte": now_time_timestamp}}]}},
+                {"$match": {"$and":[{"create_time": {"$gte": last_one_timestamp}}, {"create_time": {"$lte": now_time_timestamp}}]}},
                 {"$group": {"_id": "$keyword", "count": {"$sum": 1}}},
                 {"$project": {"_id": 0, "keyword": "$_id", "count": 1}},
                 {"$sort": SON([("count", -1)])},
