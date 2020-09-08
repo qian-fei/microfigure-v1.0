@@ -630,7 +630,7 @@ def get_pic_detail(domain=constant.DOMAIN):
                             "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}},
                             "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}},
                             }},
-            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item", "like_item", "like_info._id"]},
+            {"$unset": ["user_item", "user_info", "pic_temp_item", "follow_item", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         
@@ -727,10 +727,13 @@ def get_article_detail(domain=constant.DOMAIN):
             {"$match": {"uid": uid}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "follow", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$user_id", "$$user_id"]}, "state": 1}}], "as": "follow_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
+            {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "cover_url": {"$concat": [domain, "$cover_url"]}, 
-                            "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["user_item", "user_info", "follow_item"]},
+                            "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}},
+                            "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}},
+                            }},
+            {"$unset": ["user_item", "user_info", "follow_item", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
         cursor = manage.client["works"].aggregate(pipeline)

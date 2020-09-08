@@ -325,8 +325,10 @@ def get_admin_operation_log(delta_time=30, length_max=32):
         type = request.args.get("type") # account账号 nick昵称 mobile电话
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         # 校验

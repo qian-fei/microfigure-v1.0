@@ -90,8 +90,10 @@ def get_report_comment_search(search_max=32, delta_time=30):
                 return response(msg="Bad Request: Miss params: 'start_time'.", code=1, status=400)
             if not end_time:
                 return response(msg="Bad Request: Miss params: 'end_time'.", code=1, status=400)
-            timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-            timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+            start_time = start_time + " 00:00:00"
+            end_time = end_time + " 23:59:59"
+            timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+            timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
             start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
             end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
             if (int(end_time) - int(start_time)) // (24 * 3600 * 1000) > delta_time:

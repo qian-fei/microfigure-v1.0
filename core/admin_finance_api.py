@@ -42,8 +42,10 @@ def get_order_list(delta_time=30):
         state = request.args.get("state") # 1未付款，2已完成，3全部
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if not num:
@@ -200,8 +202,10 @@ def get_withdrawal_records(delta_time=30):
         state = request.args.get("state") # 1驳回，2已完成
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if not num:
@@ -289,8 +293,10 @@ def get_order_recharge(delta_time=30):
         channel = request.args.get("channel") # 支付宝/微信 全部default
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if not num:
@@ -363,8 +369,10 @@ def get_withdrawal_records_audit(delta_time=30):
         channel = request.args.get("channel") # 全部传default, 其余对应传，如支付宝
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if not num:
@@ -453,8 +461,10 @@ def get_withdrawal_records_export(delta_time=30, domain=constant.DOMAIN):
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
         state = request.args.get("state") # 1驳回，2已完成
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if category not in ["account", "order"]:
@@ -517,8 +527,10 @@ def get_order_recharge_export(delta_time=30, domain=constant.DOMAIN):
         channel = request.args.get("channel") # 支付宝/微信 全部default
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if category not in ["account", "order", "trade"]:
@@ -581,8 +593,10 @@ def get_withdrawal_records_audit_export(delta_time=30, domain=constant.DOMAIN):
         channel = request.args.get("channel") # 全部传default, 其余对应传，如支付宝
         start_time = request.args.get("start_time")
         end_time = request.args.get("end_time")
-        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d")
-        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d")
+        start_time = start_time + " 00:00:00"
+        end_time = end_time + " 23:59:59"
+        timeArray1 = datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        timeArray2 = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray1.timetuple()) * 1000)
         end_time = int(time.mktime(timeArray2.timetuple()) * 1000)
         if category not in ["account", "order", "trade"]:

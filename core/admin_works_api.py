@@ -419,6 +419,12 @@ def put_pic_works_state():
         doc = manage.client["works"].update({"uid": {"$in": pic_id}}, {"$set": {"state": state}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Update failed.", code=1, status=400)
+        # 删除作品时，user中works_num -1
+        if state == -1:
+            cursor = manage.client["works"].find({"uid": {"$in": pic_id}}, {"_id": 0, "user_id": 1})
+            user_id_list = [doc["user_id"] for doc in cursor]
+            user_list = list(set(user_id_list))
+            doc = manage.client["user"].update({"uid": {"$in": user_list}}, {"$inc": {"works_num": -1}}, multi=True)
         return response()
     except Exception as e:
         manage.log.error(e)
