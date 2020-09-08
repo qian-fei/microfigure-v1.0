@@ -140,6 +140,13 @@ def put_report_comment_state(option_max=10):
         if state not in [-1, 1]:
             return response(msg="Bad Request: Params 'state' is erroe.", code=1, status=400)
         doc = manage.client["comment"].update({"uid": {"$in": comment_list}}, {"$set": {"state": int(state)}})
+
+        # 删除评论时，相应减少works中comment_num
+        if state == -1:
+            cursor = manage.client["comment"].find({"uid": {"$in": comment_list}}, {"_id": 0, "works_id": 1})
+            works_id_list = [doc["works_id"] for doc in cursor]
+            works_id_list = list(set(works_id_list))
+            doc = manage.client["works"].update({"uid": {"$in": works_id_list}}, {"$inc": {"comment_num": -1}})
         return response()
     except Exception as e:
         manage.log.error(e)

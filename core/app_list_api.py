@@ -625,7 +625,7 @@ def get_pic_detail(domain=constant.DOMAIN):
             {"$lookup": {"from": "like_records", "let": {"uid": "$uid"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$uid"]}, "type": "zp", "user_id": user_id}}], "as": "like_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "like_info": {"$arrayElemAt": ["$like_item", 0]}}},
             {"$addFields": {"pic_item": {"$map": {"input": "$pic_temp_item", "as": "item", "in": {"big_pic_url": {"$concat": [domain, "$$item.big_pic_url"]}, "thumb_url": {"$concat": [domain, "$$item.thumb_url"]},
-                            "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id"}}}, 
+                            "title": "$$item.title", "desc":"$$item.desc", "keyword": "$$item.keyword", "label": "$$item.label", "uid": "$$item.uid", "works_id": "$$item.works_id", "works_state": "$$item.works_state"}}}, 
                             "nick": "$user_info.nick", "head_img_url": {"$concat": [domain, "$user_info.head_img_url"]}, "works_num": "$user_info.works_num", 
                             "is_follow": {"$cond": {"if": {"$in": [user_id, "$follow_item.fans_id"]}, "then": True, "else": False}},
                             "is_like": {"$cond": {"if": {"$eq": ["$like_info.state", 1]}, "then": True, "else": False}},

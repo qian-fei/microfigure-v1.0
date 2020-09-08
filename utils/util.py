@@ -431,6 +431,7 @@ class GenerateImage(object):
         h_b = int(w_b / p)
         out = im.resize((w_b, h_b), Image.ANTIALIAS)
         file_path_b = temp_str + "_b." + extension
+        out = out.convert("RGB")
         out.save(constant_path + file_path_b)
         context = {
             "file_path_b": file_path_b, # 大图
@@ -457,12 +458,14 @@ class GenerateImage(object):
         h_t = int(w_t / p)
         out = im.resize((w_t, h_t), Image.ANTIALIAS)
         file_path_t = temp_str + "_t." + extension
+        out = out.convert("RGB")
         out.save(constant_path + file_path_t)
         # 大图
         w_b = 1080
         h_b = int(w_b / p)
         out = im.resize((w_b, h_b), Image.ANTIALIAS)
         file_path_b = temp_str + "_b." + extension
+        out = out.convert("RGB")
         out.save(constant_path + file_path_b)
         context = {
             "file_path_t": file_path_t, # 缩略图
@@ -493,6 +496,7 @@ class GenerateImage(object):
             out = im.resize((w_s, h_s), Image.ANTIALIAS)
             uid = base64.b64encode(os.urandom(32)).decode().lower().replace("/", "")
             file_path_s = temp_str + f"/{uid}." + extension
+            out = out.convert("RGB")
             out.save(constant_path + file_path_s)
         # M规格
         w_m = 1600
@@ -504,6 +508,7 @@ class GenerateImage(object):
             uid = base64.b64encode(os.urandom(32)).decode().lower().replace("/", "")
             file_path_m = temp_str + f"/{uid}." + extension
             file_path_l = file_path
+            out = out.convert("RGB")
             out.save(constant_path + file_path_m)
         context = {
             "file_path_o": file_path, # 原图

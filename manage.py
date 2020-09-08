@@ -649,6 +649,13 @@ def user_creation_article_works():
     return app_works_api.post_create_article_works()
 
 
+@app.route(f"{url}/video/material/pic", methods=["POST"])
+@auth_user_login
+def user_creation_video_add_pic():
+    """影集创作添加图片接口"""
+    return app_works_api.post_video_add_material()
+
+
 @app.route(f"{url}/user/material/list", methods=["GET"])
 @auth_user_login
 def user_info_material_list():

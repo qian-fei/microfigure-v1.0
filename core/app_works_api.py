@@ -240,7 +240,8 @@ def get_pic_material(domain=constant.DOMAIN):
             {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$project": {"_id": 0, "uid": 1, "pic_url": {"$concat": [domain, "$pic_url"]}, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "label": 1, "title": 1, "format": 1}}
+            {"$project": {"_id": 0, "uid": 1, "pic_url": {"$concat": [domain, "$pic_url"]}, "thumb_url": {"$concat": [domain, "$thumb_url"]}, 
+                          "big_pic_url": {"$concat": [domain, "$big_pic_url"]}, "label": 1, "title": 1, "format": 1}}
         ]
         cursor = manage.client["pic_material"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -337,7 +338,6 @@ def post_create_pic_works(label_max=9, title_max=32):
                 return response(msg=f"最多允许选择{label_max}", code=1)
             # 分词
             keyword = list(jieba.cut(title))
-            print(user_id,  uid)
             # 更新素材库
             doc = manage.client["pic_material"].update({"uid": uid, "user_id": user_id}, {"$set": {"title": title, "label": label, "keyword": keyword}})
             if doc["n"] == 0:
@@ -682,7 +682,8 @@ def post_video_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=con
                 manage.client["label"].insert({"uid": id, "priority": float(0), "type": "video", "label": i, "works_num": 1, "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         data = {
             "pic_id": pic_id_list[0],
-            "works_id": me_works_id
+            "works_id": uid,
+            "me_id": me_works_id
         }
         return response(data=data)
     except Exception as e:
@@ -708,6 +709,45 @@ def post_user_add_label():
                 manage.client["history_label"].insert(condition)
             else:
                 manage.client["history_label"].update_one({"user_id": user_id, "label": i}, {"$set": {"update_time": int(time.time() * 1000)}})
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_video_add_material(label_max=9, title_max=32):
+    """影集添加图片接口"""
+    try:
+        # 参数
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1, status=400)
+        pic_list = request.json.get("pic_list")
+        if not pic_list:
+            return response(msg="Bad Request: Miss param 'pic_list'.", code=1, status=400)
+        for i in pic_list:
+            title = i["title"]
+            label = i["label"]
+            uid = i["uid"]
+            format = i["format"]
+            if not title:
+                return response(msg="Bad Request: Miss param 'title'.", code=1, status=400)
+            if len(title) > title_max:
+                return response(msg=f"标题上限{title_max}个字符", code=1)
+            if not label:
+                return response(msg="Bad Request: Miss param 'label'.", code=1, status=400)
+            if not uid:
+                return response(msg="Bad Request: Miss param 'uid'.", code=1, status=400)
+            if not format:
+                return response(msg="Bad Request: Miss param 'format'.", code=1, status=400)
+            if len(label) > label_max:
+                return response(msg=f"最多允许选择{label_max}", code=1)
+            # 分词
+            keyword = list(jieba.cut(title))
+            # 更新素材库
+            doc = manage.client["pic_material"].update({"uid": uid, "user_id": user_id}, {"$set": {"title": title, "label": label, "keyword": keyword}})
+            if doc["n"] == 0:
+                return response(msg="Update failed", code=1, status=400)
         return response()
     except Exception as e:
         manage.log.error(e)

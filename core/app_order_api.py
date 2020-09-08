@@ -121,10 +121,11 @@ def get_order_detail(domain=constant.DOMAIN):
         pipeline = [
             {"$match": {"user_id": user_id, "order": order}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"balance": "$user_info.balance"}},
-            {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "balance": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
+            {"$addFields": {"balance": "$user_info.balance", "tag": "$works_info.tag"}},
+            {"$unset": ["user_item", "user_info", "works_info", "works_item"]},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "currency": 1, "balance": 1, "tag": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
             {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
             {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "state": "$_id.state", "balance": "$_id.balance"}}
         ]
@@ -261,10 +262,11 @@ def get_user_order_list(domain=constant.DOMAIN):
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
-            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}}},
-            {"$addFields": {"balance": "$user_info.balance"}},
-            {"$unset": ["user_item", "user_info"]},
-            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
+            {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
+            {"$addFields": {"balance": "$user_info.balance", "tag": "$works_info.tag"}},
+            {"$unset": ["user_item", "user_info", "works_info", "works_item"]},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "tag": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
             {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
             {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": "$_id.balance", "state": "$_id.state"}}
         ]
