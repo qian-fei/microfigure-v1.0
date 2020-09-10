@@ -37,7 +37,7 @@ def get_banner(domain=constant.DOMAIN):
         # 获取数据
         pipeline = [
             {"$match": {"state": 1}},
-            {"$sort": SON([("order", -1)])},
+            {"$sort": SON([("order", 1)])},
             {"$project": {"_id": 0, "uid": 1, "link": 1, "order": 1, "pic_url": {"$concat": [domain, "$pic_url"]}, 
                           "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
                           "update_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$update_time"]}}}}}
@@ -84,9 +84,17 @@ def put_banner_order():
         if not banner_id:
             return response(msg="Bad Request: Miss params: 'banner_id'", code=1, status=400)
         # 更新
-        doc = manage.client["banner"].update({"uid": banner_id}, {"$inc": {"order": inc}})
+        doc = manage.client["banner"].find_one({"uid": banner_id})
+        if doc["order"] == 1 and inc == 1:
+            return response()
+        if doc["order"] == 10 and inc == -1:
+            return response()
+        doc = manage.client["banner"].update({"order": (doc["order"] - 1) if inc == 1 else (doc["order"] + 1), "state": 1}, 
+                                               {"$inc": {"order": 1 if inc == 1 else -1}})
+        doc = manage.client["banner"].update({"uid": banner_id}, {"$inc": {"order": -inc}})
         if doc == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
+        
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -104,6 +112,9 @@ def put_banner_state():
         doc = manage.client["banner"].update({"uid": banner_id}, {"$set": {"state": -1}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
+        doc = manage.client["banner"].find_one({"uid": banner_id})
+        order = doc["order"]
+        manage.client["banner"].update({"order": {"$gt": order}, "state": 1}, {"$inc": {"order": -1}}, multi=True)
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -116,15 +127,15 @@ def post_upload_banner(banner_max=10):
     :param banner_max: banner上限
     """
     try:
-        count = manage.client["banner"].find({}).count()
-        if count > banner_max:
-            return response(msg=f"最多支持{banner_max}张轮播图片")
+        count = manage.client["banner"].find({"state": 1}).count()
+        if count >= banner_max:
+            return response(msg=f"最多支持{banner_max}张轮播图片", code=1)
         user_id = g.user_data["user_id"]
         data_list = pic_upload_api(user_id)
         file_path = data_list[0]["file_path"]
         # 入库
         uid = base64.b64encode(os.urandom(16)).decode()
-        manage.client["banner"].insert({"uid": uid, "order": 0, "state": 1, "pic_url": file_path, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
+        manage.client["banner"].insert({"uid": uid, "order": count + 1, "state": 1, "pic_url": file_path, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)})
         return response()
     except Exception as e:
         manage.log.error(e)
@@ -213,9 +224,9 @@ def get_label_list():
         # 查询
         pipeline = [
             {"$match": {"state": {"$ne": -1}, "type": type}},
+            {"$sort": SON([("priority", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$sort": SON([("priority", -1)])},
             {"$project": {"_id": 0, "create_time": 0, "update_time": 0}}
         ]
         cursor = manage.client["label"].aggregate(pipeline)

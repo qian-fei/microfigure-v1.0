@@ -139,8 +139,8 @@ def put_report_comment_state(option_max=10):
             return response(msg=f"最多允许选择{option_max}条评论", code=1)
         if state not in [-1, 1]:
             return response(msg="Bad Request: Params 'state' is erroe.", code=1, status=400)
-        doc = manage.client["comment"].update({"uid": {"$in": comment_list}}, {"$set": {"state": int(state)}})
-
+        doc = manage.client["comment"].update({"uid": {"$in": comment_list}}, {"$set": {"state": int(state)}}, multi=True)
+        doc = manage.client["like_records"].update({"comment_id": {"$in": comment_list}}, {"$set": {"state": int(state)}}, multi=True)
         # 删除评论时，相应减少works中comment_num
         if state == -1:
             cursor = manage.client["comment"].find({"uid": {"$in": comment_list}}, {"_id": 0, "works_id": 1})

@@ -96,7 +96,7 @@ def get_admin_account_search(search_max=32):
         ]
         cursor = manage.client["user"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
-        condition = {"state": {"$ne": -1}, "type": {"$in": ["super", "admin"]}, f"{type}": {"$regex": content}}
+        condition = {"state": {"$ne": -1}, "type": "admin", f"{type}": {"$regex": content}}
         count = manage.client["user"].find(condition).count()
         data["count"] = count
         data["list"] = data_list if data_list else []

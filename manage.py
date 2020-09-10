@@ -41,22 +41,22 @@ app.config["JSON_AS_ASCII"] = False
 log = util.Logger("log_debug")
 # 输出日志信息
 log.info("The application has started.")
-# 连接mongoDB
-mongo = util.MongoDB(log)
-# 连接数据库
-client = mongo.client["local_writer"]["microfigure"]
+# # 连接mongoDB
+# mongo = util.MongoDB(log)
+# # 连接数据库
+# client = mongo.client["local_writer"]["microfigure"]
 
 # 云数据库链接
-# CONN_ADDR1 = "dds-uf6c62f85a588a641741-pub.mongodb.rds.aliyuncs.com:3717" 
-# CONN_ADDR2 = "dds-uf6c62f85a588a642965-pub.mongodb.rds.aliyuncs.com:3717"
-# REPLICAT_SET = "mgset-32825379"
-# username = "root"
-# password = "Rd123!@#"
-# # 获取mongoclient
-# client = pymongo.MongoClient([CONN_ADDR1, CONN_ADDR2], replicaSet=REPLICAT_SET)
-# # 管理员授权
-# client.admin.authenticate(username, password)
-# client = client["microfigure"]
+CONN_ADDR1 = "dds-uf6c62f85a588a641741-pub.mongodb.rds.aliyuncs.com:3717" 
+CONN_ADDR2 = "dds-uf6c62f85a588a642965-pub.mongodb.rds.aliyuncs.com:3717"
+REPLICAT_SET = "mgset-32825379"
+username = "root"
+password = "Rd123!@#"
+# 获取mongoclient
+client = pymongo.MongoClient([CONN_ADDR1, CONN_ADDR2], replicaSet=REPLICAT_SET)
+# 管理员授权
+client.admin.authenticate(username, password)
+client = client["microfigure"]
 
 # 路径
 url = "/api/v1"
@@ -950,6 +950,21 @@ def balance_pay():
 def balance_recharge():
     """余额充值接口"""
     return app_order_api.post_top_up()
+
+
+@app.route(f"{url}/order/pay/verify", methods=["POST"])
+@auth_user_login
+def order_pay_vierify_pic():
+    """订单支付时校验图片是否已经购买接口"""
+    return app_order_api.post_verify_pic_isbuy()
+
+
+# 丢弃
+@app.route(f"{url}/delete/same/pic", methods=["DELETE"])
+@auth_user_login
+def delete_same_pic():
+    """删除未支付订单中相同的图片接口"""
+    return app_order_api.put_same_pic()
 
 
 @app.route(f"{url}/recharge/alipay/callback", methods=["POST"])

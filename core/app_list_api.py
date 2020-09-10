@@ -246,7 +246,6 @@ def works_browse_records_api(works_id):
         # 凌晨时间戳
         today = datetime.date.today()
         today_stamp = int(time.mktime(today.timetuple()) * 1000)
-        author_id = doc.get("user_id")
         doc = manage.client["user_statistical"].find_one({"user_id": author_id, "date": today_stamp})
         if doc:
             manage.client["user_statistical"].update({"user_id": author_id, "date": today_stamp}, {"$inc": {"browse_num": 1}})
@@ -319,7 +318,7 @@ def get_label_kw(kw_max=5, label_max=5):
         doc = manage.client["custom_label"].find_one({"user_id": user_id, "type":  type, "state": 1}, {"_id": 0})
         if not doc:
             pipeline = [
-                {"$match": {"priority": {"$gt": 0}, "state": 1, "type": type}},
+                {"$match": {"state": 1, "type": type}},
                 {"$sort": SON([("priority", -1)])},
                 {"$limit": label_max},
                 {"$project": {"_id": 0, "label": 1}},
@@ -541,7 +540,8 @@ def get_video_top_list(video_top_max=10, domain=constant.DOMAIN):
             {"$limit": video_top_max},
             {"$lookup": {"from": "like_records", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$works_id", "$$works_id"]}}}], "as": "like_item"}},
             {"$project": {"_id": 0, "uid": 1, "top_cover_url": {"$concat": [domain, "$top_cover_url"]}, "top_title": 1, "like_num": 1, "browse_num": 1, "is_like": {"$cond": {"if": {"$eq": [user_id, "$like_info.user_id"]}, "then": True, "else": False}}}},
-            {"$unset": ["like_info", "like_item"]}
+            {"$unset": ["like_info", "like_item"]},
+            {"$sort": SON([("order", 1)])}
         ]
         cursor = manage.client["works"].aggregate(pipeline)
         data_list = [doc for doc in cursor]

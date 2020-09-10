@@ -128,10 +128,14 @@ def put_order_refund():
             return response(msg="Bad Request: Params: 'amount' is error.", code=1, status=400)
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
-        doc = manage.client["user"].update({"uid": user_id}, {"$inc": {"balance": amount}})
+        doc = manage.client["user"].update({"uid": user_id}, {"$inc": {"balance": int(amount)}})
         if doc["n"] == 0:
             return response(msg="'user' update failed.", code=1, status=400)
         doc = manage.client["order"].update({"order": order}, {"$set": {"state": 3}})
+        if doc["n"] == 0:
+            return response(msg="'order' update failed.", code=1, status=400)
+        # 删除用户图片库该商品
+        doc = manage.client["goods"].update({"order": order}, {"$set": {"state": -1}}, multi=True)
         if doc["n"] == 0:
             return response(msg="'order' update failed.", code=1, status=400)
         return response()

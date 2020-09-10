@@ -87,7 +87,7 @@ def get_platform_info(uid="001"):
             data.update({doc["format"]: doc["price"]})
         cursor = manage.client["bank"].find({})
         fees_list = [doc for doc in cursor]
-        fees = fees_list[0][0]["fees"] if fees_list else 0
+        fees = fees_list[0]["fees"] if fees_list else 0
         data.update({"fees": fees})
         return response(data=data)
     except Exception as e:
@@ -128,7 +128,7 @@ def post_platform_pricing(uid="001"):
         doc = manage.client["price"].update({"format": "扩大授权", "uid": uid}, {"$set": {"price": float(k_price)}})
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
-        doc = manage.client["support_method"].update({"state": 1}, {"$set": {"fees": fees}}, multi=True)
+        doc = manage.client["bank"].update({"state": 1}, {"$set": {"fees": fees}}, multi=True)
         if doc["n"] == 0:
             return response(msg="Bad Request: Update failed.", code=1, status=400)
         return response()

@@ -343,5 +343,11 @@ temp = {
 # print(trade_data["trade_id"])
 
 
-mobile = "17725021251"
-print(mobile[-4:])
+# mobile = "17725021251"
+# print(mobile[-4:])
+# today = datetime.date.today()
+# today_stamp = int(time.mktime(today.timetuple()) * 1000)
+# print(today_stamp)
+exclude = []
+for doc in exclude:
+    exclude_amount += doc["price"]

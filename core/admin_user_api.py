@@ -99,7 +99,8 @@ def get_user_filter_list(search_max=16, domain=constant.DOMAIN):
                         ("nick" if category == "nick" else "account") if content else "null": {"$regex": content} if content else None}},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
-            {"$project": {"_id": 0, "uid": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "nick": 1, "account": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
+            {"$project": {"_id": 0, "uid": 1, "head_img_url": {"$cond": {"if": {"$ne": ["$head_img_url", ""]}, "then": {"$concat": [domain, "$head_img_url"]}, "else": "$head_img_url"}}, 
+                          "nick": 1, "account": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}, 
                           "group": 1, "state": 1}}
         ]
         cursor = manage.client["user"].aggregate(pipeline)
@@ -177,9 +178,9 @@ def get_user_detail(domain=constant.DOMAIN):
         # 基本信息查询
         pipeline = [
             {"$match": {"uid": user_id}},
-            {"$project": {"_id": 0, "uid": 1, "nick": 1, "head_img_url": {"$concat": [domain, "$head_img_url"]}, "background_url": {"$concat": [domain, "$background_url"]}, 
-                          "account": 1, "label": 1, "state": 1, "sex": 1, "group": 1, "mobile": 1, "balance": 1, "sign": 1, "org_name": 1, "belong": 1, 
-                          "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
+            {"$project": {"_id": 0, "uid": 1, "nick": 1, "head_img_url": {"$cond": {"if": {"$ne": ["$head_img_url", ""]}, "then": {"$concat": [domain, "$head_img_url"]}, "else": "$head_img_url"}}, 
+                          "background_url": {"$concat": [domain, "$background_url"]}, "account": 1, "label": 1, "state": 1, "sex": 1, "group": 1, "mobile": 1, "balance": 1, "sign": 1, "org_name": 1, 
+                          "belong": 1, "create_time": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$add":[manage.init_stamp, "$create_time"]}}}}}
         ]
         cursor = manage.client["user"].aggregate(pipeline)
         data_list = [doc for doc in cursor]

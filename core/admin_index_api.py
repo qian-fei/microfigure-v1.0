@@ -40,7 +40,7 @@ def get_top_statistics():
         # 查询数据
         pipeline = [
             {"$addFields": {"today_amount": {"$cond": {"if": {"$eq": ["$date", today_stamp]}, "then": "$amount", "else": 0}}, 
-                           "today_works": {"$cond": {"if": {"$eq": ["$date", today_stamp]}, "then": "$works_num", "else": 0}}}},
+                            "today_works": {"$cond": {"if": {"$eq": ["$date", today_stamp]}, "then": "$works_num", "else": 0}}}},
             {"$group": {"_id": None, "register_num": {"$sum": "$register_num"}, "goods_num": {"$sum": "$goods_num"}, "amount_num": {"$sum": "$today_amount"}, 
                         "inc_works_num": {"$sum": "$today_works"}}},
             {"$project": {"_id": 0, "register_num": 1, "goods_num": 1, "amount_num": 1, "inc_works_num": 1}},

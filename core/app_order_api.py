@@ -21,12 +21,11 @@ from utils.alipay import AliPay
 from utils.wechat import WechatPay
 
 
-def add_user_goods_api(order, buyer_id , seller_id):
+def add_user_goods_api(order, buyer_id):
     """
     添加到用户商品
     :param order: 商品订单
     :param buyer_id: 买家id
-    :param seller_id: 卖家id
     """
     try:
         cursor = manage.client["order"].find({"order": order})
@@ -46,13 +45,115 @@ def add_user_goods_api(order, buyer_id , seller_id):
         uid = base64.b64encode(os.urandom(16)).decode()
         condition = []
         for i in works_id_list:
-            temp = {"uid": uid, "user_id": buyer_id, "works_id": i, "pic_id": data2[i], "spec": data1[i], "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
-            condition.append(temp)
+            doc = manage.client["goods"].find_one({"user_id": buyer_id, "works_id": i})
+            if doc:
+                spec = list(set(doc["spec"] + data1[i]))
+                manage.client["goods"].update({"user_id": buyer_id, "works_id": i}, {"$set": {"spec": spec}})
+            else:
+                temp = {"uid": uid, "user_id": buyer_id, "order": order, "works_id": i, "pic_id": data2[i], "spec": data1[i], "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                condition.append(temp)
         manage.client["goods"].insert(condition)
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
+
+def statistical_day_amount_api(data_list):
+    """
+    统计日收入
+    :param data_list: 订单商品列表
+    """
+    try:
+        # today时间戳
+        today = datetime.date.today()
+        today_stamp = int(time.mktime(today.timetuple()) * 1000)
+        for i in data_list:
+            temp = manage.client["works"].find_one({"uid": i["works_id"]})
+            doc = manage.client["user_statistical"].find_one({"user_id": temp["user_id"], "date": today_stamp})
+            if doc:
+                manage.client["user_statistical"].update({"user_id": temp["user_id"], "date": today_stamp}, {"$inc": {"amount": i["price"], "sale_num": 1}})
+            else:
+                condition = {"user_id": temp["user_id"], "date": today_stamp, "works_num": 0, "sale_num": 1, "browse_num": 0, "amount": i["price"], "like_num": 0, "goods_num": 0, "register_num": 0,
+                            "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                manage.client["user_statistical"].insert(condition)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def sales_records_api(data_list):
+    """销售记录api
+    :param data_list: 订单商品列表
+    """
+    try:
+        for i in data_list:
+            temp = manage.client["works"].find_one({"uid": i["works_id"]})
+            doc = manage.client["sales_records"].find_one({"user_id": temp["user_id"], "order": i["order"], "works_id": i["works_id"], "state": 1})
+            if doc:
+                manage.client["sales_records"].update({"user_id": temp["user_id"], "order": i["order"], "works_id": i["works_id"]}, {"$inc": i["price"]})
+            else:
+                uid = base64.b64encode(os.urandom(16)).decode()
+                condition = {"uid": uid, "user_id": temp["user_id"], "order": i["order"], "works_id": i["works_id"], "title": temp["title"], "pic_url": i["pic_url"], "amount": i["price"], 
+                             "state": 1, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                manage.client["sales_records"].insert(condition)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+def post_verify_pic_isbuy(domain=constant.DOMAIN):
+    """校验订单中的图片是否已经购买
+    :param domain: 域名
+    """
+    try:
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1)
+        order = request.json.get("order")
+        if not order:
+            return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
+        cursor = manage.client["order"].find({"order": order})
+        exclude = []
+        total_amount = 0
+        verify = 0
+        for i in cursor:
+            doc = manage.client["order"].find_one({"works_id": i["works_id"], "user_id": i["user_id"], "spec": i["spec"], "order": {"$ne": order}, "state": 2})
+            if doc:
+                exclude.append(doc)
+                manage.client["order"].update_one({"order": order, "works_id": i["works_id"], "spec": i["spec"], "state": 1}, {"$set": {"state": -2}})
+            total_amount += i["price"]
+            verify += 1
+        if verify == 0:
+            return response(msg="Bad Request: Params 'order' is error.", code=1, status=400)
+        exclude_amount = 0
+        for doc in exclude:
+            exclude_amount += doc["price"]
+        # if exclude_amount != 0:
+        #     doc = manage.client["trade"].update({"order": order}, {"$inc": {"trade_amount": -exclude_amount}})
+        delta_amount = total_amount - exclude_amount
+
+        # 查询
+        pipeline = [
+            {"$match": {"user_id": user_id, "order": order, "state": -2}},
+            {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
+            {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
+            {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
+            {"$addFields": {"balance": "$user_info.balance", "tag": "$works_info.tag"}},
+            {"$unset": ["user_item", "user_info", "works_info", "works_item"]},
+            {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "tag": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, 
+                          "price": 1, "update_time": 1, "create_time": 1}}
+        ]
+        cursor = manage.client["order"].aggregate(pipeline)
+        data_list = [doc for doc in cursor]
+        data = {}
+        data["delta_amount"] = delta_amount
+        data["exclude_amount"] = exclude_amount
+        data["works_item"] = data_list
+        return response(data=data)
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+    
 
 def post_add_car():
     """加入购物车"""
@@ -86,6 +187,10 @@ def post_add_car():
         # 规格
         doc = manage.client["price"].find_one({"uid": price_id, "price": price})
         spec = doc.get("format")
+        # 判断是否已经加入加入购物车
+        temp_doc = manage.client["order"].find_one({"works_id": works_id, "user_id": user_id, "spec": spec, "state": 0})
+        if not is_buy and temp_doc:
+            return response()
         currency = doc.get("currency")
         price_unit = doc.get("price_unit")
         uid = base64.b64encode(os.urandom(32)).decode()
@@ -102,7 +207,7 @@ def post_add_car():
         return response(data= order if is_buy else None)
     except Exception as e:
         manage.log.error(e)
-        return response(msg="Internal Server Error: %s.", code=1, status=500)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
 
 
 def get_order_detail(domain=constant.DOMAIN):
@@ -119,7 +224,7 @@ def get_order_detail(domain=constant.DOMAIN):
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
         pipeline = [
-            {"$match": {"user_id": user_id, "order": order}},
+            {"$match": {"user_id": user_id, "order": order, "state": {"$ne": -2}}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},
@@ -155,7 +260,7 @@ def get_user_car_list(domain=constant.DOMAIN):
         # 查询
         pipeline = [
             {"$match": {"user_id": user_id, "state": 0}},
-            {"$project": {"_id": 0, "uid": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1}}
+            {"$project": {"_id": 0, "uid": 1, "title": 1, "spec": 1, "currency": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "works_id": 1}}
         ]
         cursor = manage.client["order"].aggregate(pipeline)
         data_list = [doc for doc in cursor]
@@ -259,6 +364,7 @@ def get_user_order_list(domain=constant.DOMAIN):
         # 查询
         pipeline = [
             {"$match": {"user_id": user_id, "state": {"$in": [-1, 2]} if is_complete == "true" else 1}},
+            {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -268,7 +374,8 @@ def get_user_order_list(domain=constant.DOMAIN):
             {"$unset": ["user_item", "user_info", "works_info", "works_item"]},
             {"$project": {"_id": 0, "uid": 1, "order": 1, "title": 1, "spec": 1, "balance": 1, "currency": 1, "state": 1, "tag": 1, "thumb_url": {"$concat": [domain, "$thumb_url"]}, "price": 1, "update_time": 1, "create_time": 1}},
             {"$group": {"_id": {"order": "$order", "create_time": "$create_time", "state": "$state", "balance": "$balance"}, "total_amount": {"$sum": "$price"}, "works_item": {"$push": "$$ROOT"}}},
-            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": "$_id.balance", "state": "$_id.state"}}
+            {"$project": {"_id": 0, "order": "$_id.order", "create_time": "$_id.create_time", "works_item": 1, "total_amount": 1, "balance": "$_id.balance", "state": "$_id.state"}},
+            {"$sort": SON([("create_time", -1)])},
         ]
         cursor = manage.client["order"].aggregate(pipeline)
         if is_complete == "false":
@@ -342,7 +449,7 @@ def post_order_payment():
         if pay_method not in ["微信", "支付宝", "余额"]:
             return response(msg="Bad Request: Params 'pay_method' is error.", code=1, status=400)
         total_amount = 0
-        cursor = manage.client["order"].find({"order": order})
+        cursor = manage.client["order"].find({"order": order, "state": 1})
         n = 0
         for doc in cursor:
             total_amount += doc["price"]
@@ -568,6 +675,8 @@ def get_balance_payment():
     """余额支付"""
     try:
         user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1)
         # 参数
         trade_id = request.json.get("trade_id")
         password = request.json.get("password")
@@ -585,12 +694,12 @@ def get_balance_payment():
         order = trade_doc["order"]
         balance = doc["balance"]
         # 自己不能购买自己的商品
-        cursor = manage.client["order"].find({"order": order})
+        cursor = manage.client["order"].find({"order": order, "state": 1})
         data_list = [doc for doc in cursor]
-        works_id = data_list[0]["works_id"]
-        doc = manage.client["works"].find_one({"uid": works_id})
-        seller_id = doc["user_id"]
-        if user_id == seller_id:
+        works_id_list = [i["works_id"] for i in data_list]
+        cursor = manage.client["works"].find({"uid": {"$in": works_id_list}})
+        seller_id_list = list(set([doc["user_id"] for doc in cursor]))
+        if user_id in seller_id_list:
             return response(msg="自己不能购买自己的商品", code=1)
         if balance < trade_amount:
             return response(msg="余额不足", code=1)
@@ -599,16 +708,44 @@ def get_balance_payment():
         if doc["n"] == 0:
             return response(msg="支付失败", code=1)
         # 支付完成
-        doc = manage.client["order"].update({"order": order}, {"$set": {"state": 2}}, multi=True)
-        if doc["n"] == 0:
-            raise Exception("'order' state update failed")
+        doc = manage.client["order"].update({"order": order, "state": 1}, {"$set": {"state": 2}}, multi=True)
         # 卖家balance更新
-        doc = manage.client["user"].update({ "uid": seller_id}, {"$inc": {"balance": trade_amount}})
-        if doc["n"] == 0:
-            raise Exception(f"seller '{seller_id}' balance update failed")
+        for i in data_list:
+            doc = manage.client["works"].find_one({"uid": i["works_id"]})
+            doc = manage.client["user"].update({ "uid": doc["user_id"]}, {"$inc": {"balance": i["price"]}})
         # 将商品添加到用户图片库
-        add_user_goods_api(order, user_id, seller_id)
+        add_user_goods_api(order, user_id)
+        # 统计日收入
+        statistical_day_amount_api(data_list)
+        # 统计卖家销售记录
+        sales_records_api(data_list)
         return response()
     except Exception as e:
         manage.log.error(e)
         return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+# 丢弃
+def put_same_pic():
+    """删除已存在未付款订单中的图片"""
+    try:
+        user_id = g.user_data["user_id"]
+        if not user_id:
+            return response(msg="Bad Request: User not logged in.", code=1)
+        # 参数
+        works_id = request.json.get("works_id")
+        format = request.json.get("format")
+        if not works_id:
+            return response(msg="Bad Request: Miss params: 'works_id'." , code=1, status=400)
+        if not format:
+            return response(msg="Bad Request: Miss params: 'format'." , code=1, status=400)
+        doc = manage.client["order"].update({"user_id": user_id, "works_id": works_id, "spec": format}, {"$set": {"state": -2}})
+        if doc["n"] == 0:
+            return response(msg="'order' update failed.", code=1, status=400)
+        return response()
+    except Exception as e:
+        manage.log.error(e)
+        return response(msg="Internal Server Error: %s." % str(e), code=1, status=500)
+
+
+

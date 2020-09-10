@@ -256,7 +256,7 @@ def get_user_follow_works(domain=constant.DOMAIN):
                 last_look_time = doc["last_look_time"]
                 n += 1
         pipeline = [
-            {"$match": {"user_id": {"$in": user_list}}},
+            {"$match": {"user_id": {"$in": user_list}, "state": 2}},
             {"$lookup": {"from": "pic_material", "let": {"pic_id": "$pic_id"}, "pipeline": [{"$match": {"$expr": {"$in": ["$uid", "$$pic_id"]}}}], "as": "pic_temp_item"}},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "video_material", "let": {"video_id": "$video_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$video_id"]}}}], "as": "video_item"}},
@@ -503,6 +503,7 @@ def post_userinfo_alter_mobile():
             return response(msg="请输入正确的手机号", code=1)
 
         # 不能重复换绑同一个手机号
+        doc = manage.client["user"].find_one({"uid": uid})
         if new_mobile == doc["mobile"]:
             return response(msg="不能换绑原手机号", code=1)
 
@@ -511,11 +512,11 @@ def post_userinfo_alter_mobile():
             return response(msg="请输入正确的手机号", code=1)
 
         # 更新手机号
-        client["user"].update_one({"uid": uid}, {"$set": {"mobile": new_mobile}})
+        manage.client["user"].update_one({"uid": uid}, {"$set": {"mobile": new_mobile}})
 
-        return response(status=401)
+        return response()
     except Exception as e:
-        log.error(e)
+        manage.log.error(e)
         return response(msg="Internal Server Error：%s." % str(e), code=1, status=500)
 
 
@@ -783,6 +784,7 @@ def get_user_comment_history(domain=constant.DOMAIN):
         # 查询数据
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1}},
+            {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -825,6 +827,7 @@ def get_user_like_history(domain=constant.DOMAIN):
         # 查询数据
         pipeline = [
             {"$match": {"user_id": user_id, "state": 1, "type": "pl"}},
+            {"$sort": SON([("create_time", -1)])},
             {"$skip": (int(page) - 1) * int(num)},
             {"$limit": int(num)},
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
@@ -871,8 +874,8 @@ def get_user_goods_list(domain=constant.DOMAIN):
             {"$match": {"user_id": user_id, "state": 1}},
             {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"works_info": {"$arrayElemAt": ["$works_item", 0]}}},
-            {"$addFields": {"title": "$works_info.title", "pic_id": "$works_info.pic_id", "price_id": "$works_info.price_id", "lable": "$works_info.lable"}},
-            {"$match": {"$or": [{"title" if content != "default" else "null": content if content != "default" else None}, 
+            {"$addFields": {"title": "$works_info.title", "pic_id": "$works_info.pic_id", "price_id": "$works_info.price_id", "label": "$works_info.label"}},
+            {"$match": {"$or": [{"title" if content != "default" else "null": {"$regex": content} if content != "default" else None}, 
                                 {"label" if content != "default" else "null": content if content != "default" else None}]}},
             {"$unset": ["works_item", "works_info"]},
             {"$skip": (int(page) - 1) * int(num)},
@@ -940,7 +943,7 @@ def get_goods_detail(domain=constant.DOMAIN):
     try:
         # 用户uid
         user_id = g.user_data["user_id"]
-        # 获取图片uid
+        # 获取作品uid
         uid = request.args.get("uid")
         if not uid:
             return response(msg="Bad Request: Miss params: 'uid'.", code=1, status=400)
@@ -971,7 +974,7 @@ def get_goods_detail(domain=constant.DOMAIN):
         if pic_data[0].get("price_id"):
             pipeline = [
                 {"$match": {"uid": pic_data[0].get("price_id")}},
-                {"$lookup": {"from": "goods", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"$expr": {"$eq": ["$pic_id", "$$pic_id"]}}}], "as": "goods_item"}},
+                {"$lookup": {"from": "goods", "let": {"pic_id": "$pic_id"}, "pipeline":[{"$match": {"user_id": user_id, "pic_id": pic_data[0].get("pic_id")[0]}}], "as": "goods_item"}},
                 {"$addFields": {"goods_info": {"$arrayElemAt": ["$goods_item", 0]}}},
                 {"$addFields": {"spec": "$goods_info.spec", "pic_url": {"$concat": [domain, "$pic_url"]}}},
                 {"$project": {"_id": 0, "pic_url": {"$cond": {"if": {"$in": ["$format", "$spec"]}, "then": "$pic_url", "else": None}}, "format": 1, "height": 1, "width": 1, "price": 1, "currency": 1}}

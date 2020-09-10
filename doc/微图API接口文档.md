@@ -931,6 +931,7 @@ GET
 | create_time  |  是  | Integer  | 创建时间   | 毫秒时间戳                               |
 | update_time  |  是  | Integer  | 更新时间   | 毫秒时间戳                               |
 |  is_follow   |  是  | Boolean  | 是否关注   | true已关注，false未关注                  |
+|   is_like    |  是  | Boolean  | 是否点赞   | true已点赞，false未点赞                  |
 
 返回示例
 
@@ -951,6 +952,7 @@ GET
         	"state": 2,
         	"is_recommend": true,
             "is_follow": true,
+            "is_like": true,
         	"type": "tj",
         	"pic_num": 1,
         	"like_num": 666,
@@ -3167,6 +3169,7 @@ GET
 |     uid     |  是  |  String  | 图片id     |
 |    title    |  是  |  String  | 标题       |
 |    label    |  是  |  Array   | 标签       |
+|   pic_url   |  是  |  String  | 原图路径   |
 | big_pic_url |  是  |  String  | 大图片路径 |
 |  thumb_url  |  是  |  String  | 缩略图路径 |
 | create_time |  是  | Integer  | 时间戳     |
@@ -3179,6 +3182,7 @@ GET
         "title": "大哥大",
         "uid": "0122154",
         "label": ["我的", "他的", "哈哈"],
+        "pic_url":"http://www.baidu.com/img/1.png",
         "big_pic_url": "http://www.baidu.com/img/1.png",
         "thumb_url": "http://www.baidu.com/img/1.png",
         "create_time": 1594848185000
@@ -5651,7 +5655,49 @@ POST
 }
 ```
 
-##### 
+##### 14.影集制作添加图片接口
+
+请求URL：
+
+```
+/api/v1/video/material/pic
+```
+
+请求方式：
+
+```
+POST
+```
+
+接口说明：
+
+```
+制作影集，添加图片
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注                           |
+| :------: | :--: | :------: | :------- | ------------------------------ |
+| pic_list |  是  |  Array   | 外层结构 | 以下字段组成对象放入pic_list中 |
+|  title   |  是  |  String  | 标题     |                                |
+|  label   |  是  |  Array   | 标签     |                                |
+|   uid    |  是  |  String  | 图片id   |                                |
+|  format  |  是  |  String  | 图片格式 |                                |
+
+返回字段: 无
+
+返回示例：
+
+```json
+{
+  "data": null,
+  "code": 0,
+  "msg": "Request successful."
+}
+```
+
+
 
 #### 五、订单管理
 
@@ -5858,6 +5904,7 @@ GET
 | currency     | 是   | String   | 币种【属于works_item】                   |
 | price        | 是   | Float    | 价格【属于works_item】                   |
 | thumb_url    | 是   | String   | 缩略图【属于works_item】                 |
+| tag          | 是   | String   | 商/编【属于works_item】                  |
 
 返回示例：
 
@@ -5875,7 +5922,8 @@ GET
                 	"spec": "S",
                 	"currency": "￥",
                 	"price": 25.0,
-                	"thumb_url": "http://wwww.baidu.com/img/1.png"
+                	"thumb_url": "http://wwww.baidu.com/img/1.png",
+                	"tag": "商"
             	},
                 ...
             ]
@@ -5968,6 +6016,7 @@ GET
 | currency     | 是   | String   | 币种【属于works_item】                   |
 | price        | 是   | Float    | 价格【属于works_item】                   |
 | thumb_url    | 是   | String   | 缩略图【属于works_item】                 |
+| tag          | 是   | String   | 商/编【属于works_item】                  |
 
 返回示例：
 
@@ -5985,7 +6034,8 @@ GET
                 "spec": "S",
                 "currency": "￥",
                 "price": 25.0,
-                "thumb_url": "http://wwww.baidu.com/img/1.png"
+                "thumb_url": "http://wwww.baidu.com/img/1.png",
+            	"tag": "商"
             },
             ...
         ]
@@ -6224,3 +6274,107 @@ GET
 }
 ```
 
+##### 13.删除未支付订单中相同规格图片（丢弃）
+
+请求URL：
+
+```
+/api/v1/delete/same/pic
+```
+
+请求方式：
+
+```
+DELETE
+```
+
+接口说明：
+
+```
+删除未支付订单中相同规格图片
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 | 备注           |
+| -------- | ---- | -------- | -------- | -------------- |
+| works_id | 是   | String   | 作品id   |                |
+| format   | 是   | String   | 规格     | S/M/L/扩大授权 |
+
+返回字段：无
+
+返回示例：
+
+```json
+{
+    "data": null,
+    "msg": "Request successful.",
+    "code": 0
+}
+```
+
+##### 14.订单支付时校验图片是否购买
+
+请求URL：
+
+```
+/api/v1/order/pay/verify
+```
+
+请求方式：
+
+```
+post
+```
+
+接口说明：
+
+```
+订单支付时校验图片是否购买
+```
+
+请求参数：
+
+| 请求参数 | 必须 | 参数类型 | 参数说明 |
+| -------- | ---- | -------- | -------- |
+| order    | 是   | String   | 订单id   |
+
+返回字段：
+
+| 返回字段       | 必须 | 字段类型 | 字段说明                                 | 备注                                          |
+| -------------- | ---- | -------- | ---------------------------------------- | --------------------------------------------- |
+| delta_amount   | 是   | Float    | 剩余支付金额                             | 当delta_amount为0时，代表全部图片都已经购买过 |
+| exclude_amount | 是   | Float    | 免去多少金额                             |                                               |
+| works_item     | 是   | Array    | 图片信息                                 |                                               |
+| state          | 是   | Integer  | -1取消，0正常，1未付款，2已付款，3已退款 |                                               |
+| uid            | 是   | String   | 唯一标识【属于works_item】               |                                               |
+| title          | 是   | String   | 标题【属于works_item】                   |                                               |
+| spec           | 是   | String   | 规格【属于works_item】                   |                                               |
+| currency       | 是   | String   | 币种【属于works_item】                   |                                               |
+| price          | 是   | Float    | 价格【属于works_item】                   |                                               |
+| thumb_url      | 是   | String   | 缩略图【属于works_item】                 |                                               |
+| tag            | 是   | String   | 标签【属于works_item】                   | 商/编                                         |
+
+返回示例：
+
+```json
+{
+    "data": {
+        "delta_amount": 23.0,
+        "exclude_amount": 250.0,
+        "works_item": [{
+                "uid": "0001",
+                "title": "哈哈哈",
+                "spec": "S",
+                "currency": "￥",
+                "price": 25.0,
+                "thumb_url": "http://wwww.baidu.com/img/1.png",
+            	"tag": "商"
+            },
+            ...
+        ]
+    },
+    "msg": "Request successful.",
+    "code": 0
+}
+```
