@@ -348,6 +348,10 @@ temp = {
 # today = datetime.date.today()
 # today_stamp = int(time.mktime(today.timetuple()) * 1000)
 # print(today_stamp)
-exclude = []
-for doc in exclude:
-    exclude_amount += doc["price"]
+label = 1
+like_max = 2
+temp = 3
+match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None,
+                                     "uid" if temp else "null": {"$nin": temp} if temp else None, "is_recommend" if label != "default" else "null": False if label != "default" else None}}
+match_data["$match"].update({"label": temp})
+print(match_data)

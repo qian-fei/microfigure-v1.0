@@ -224,7 +224,7 @@ def get_order_detail(domain=constant.DOMAIN):
         if not order:
             return response(msg="Bad Request: Miss params: 'order'.", code=1, status=400)
         pipeline = [
-            {"$match": {"user_id": user_id, "order": order, "state": {"$ne": -2}}},
+            {"$match": {"user_id": user_id, "order": order}}, # "state": {"$ne": -2}
             {"$lookup": {"from": "user", "let": {"user_id": "$user_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$user_id"]}}}], "as": "user_item"}},
             {"$lookup": {"from": "works", "let": {"works_id": "$works_id"}, "pipeline": [{"$match": {"$expr": {"$eq": ["$uid", "$$works_id"]}}}], "as": "works_item"}},
             {"$addFields": {"user_info": {"$arrayElemAt": ["$user_item", 0]}, "works_info": {"$arrayElemAt": ["$works_item", 0]}}},

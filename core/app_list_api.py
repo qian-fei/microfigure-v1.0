@@ -196,14 +196,14 @@ def video_list_api(user_id, page, num, label, sort_way, recommend, temp=None, is
             {"$unset": ["pic_temp_item", "browse_info", "browse_item", "video_item", "audio_item", "video_info", "audio_info", "like_item", "like_info"]},
             {"$project": {"_id": 0}}
         ]
-                # 是否推荐
+        # 是否推荐
         if not recommend:
             skip = {"$skip": (int(page) - 1) * int(num)}
             limit = {"$limit": (int(num) - 1) if temp else int(num)}
             pipeline.insert(1, skip)
             pipeline.insert(2, limit)
             # TODO "$and": [{"create_time": {"$gte": yesterday_timestamp}}, {"create_time": {"$lte": today_timestamp}}], 
-            match_data = {"$match": {"type": {"$eq": "yj"}, "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None,
+            match_data = {"$match": {"type": "yj", "state": 2, "like_num" if label == "default" else "null": {"$gt": like_max} if label == "default" else None,
                                      "uid" if temp else "null": {"$nin": temp} if temp else None, "is_recommend" if label != "default" else "null": False if label != "default" else None}}
             if label != "default": 
                 match_data["$match"].update({"label": label})
@@ -560,11 +560,11 @@ def get_video_list():
         # 用户uid
         user_id = g.user_data["user_id"]
         # 获取参数
-        num = request.args.get("num", None)
-        page = request.args.get("page", None)
-        sort_way = request.args.get("sort_way", None)  # 正序传1，倒序传-1
-        label = request.args.get("label", None)
-        visitor_id = request.headers.get("user_id", None)
+        num = request.args.get("num")
+        page = request.args.get("page")
+        sort_way = request.args.get("sort_way")  # 正序传1，倒序传-1
+        label = request.args.get("label")
+        visitor_id = request.headers.get("user_id")
         user_id = user_id if user_id else visitor_id
         if not num:
             return response(msg="Bad Request: Miss params: 'num'.", code=1, status=400)
@@ -1128,14 +1128,14 @@ def get_option_label(label_max=20):
     """
     try:
         # 参数
-        type = request.args.get("type", None)
+        type = request.args.get("type")
         # 校验
         if not type:
             return response(msg="Bad Request: Miss params: 'type'.", code=1, status=400)
         if type not in ["pic", "video"]:
             return response(msg="Bad Request: The parameter 'type' is incorrect", code=1, status=400)
         # 查询数据库
-        cursor = manage.client["label"].find({"priority": 0, "state": 1, "type": type}, {"_id": 0, "label": 1}).limit(label_max)
+        cursor = manage.client["label"].find({"state": 1, "type": type}, {"_id": 0, "label": 1}).limit(label_max)
         data_list = [doc["label"] for doc in cursor]
         return response(data=data_list)
     except Exception as e:
