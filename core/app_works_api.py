@@ -445,9 +445,10 @@ def post_pic_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=const
         uid = base64.b64encode(os.urandom(32)).decode()
         number = genrate_file_number()
         keyword = list(jieba.cut(title))
-        condition = {"uid": uid, "user_id": user_id, "pic_id": pic_id_list, "type": "tj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
-                     "label": label, "state": 0, "is_recommend": False, "is_portrait": False, "is_products": False, "pic_num": len(pic_id_list), "like_num": 0, "comment_num": 0, 
-                     "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+        condition = {
+            "uid": uid, "user_id": user_id, "pic_id": pic_id_list, "type": "tj", "number": number, "title": title, "keyword": keyword, "cover_url": cover_url, 
+            "label": label, "state": 0, "is_recommend": False, "is_portrait": False, "is_products": False, "pic_num": len(pic_id_list), "like_num": 0, "comment_num": 0, 
+            "share_num": 0, "browse_num": 0, "sale_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
         }
         manage.client["works"].insert(condition)
         # 更新作品数
@@ -466,8 +467,10 @@ def post_pic_collect_works(label_max=9, title_max=32,pic_id_max=20, domain=const
             if doc["n"] == 0:
                 return response(msg="Update failed.", code=1, status=400)
         else:
-            condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
-                         "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+            condition = {
+                "user_id": user_id, "date": today_stamp, "works_num": 1, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
+                "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+            }
             manage.client["user_statistical"].insert(condition)
         # 历史标签表和标签表
         for i in label:
@@ -517,8 +520,9 @@ def post_create_article_works(domain=constant.DOMAIN):
             # 入库
             uid = base64.b64encode(os.urandom(32)).decode()
             cover_url = cover_url.replace(domain, "")
-            condition = {"uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 0, "type": "tw", "is_recommend": False, "like_num": 0, 
-                        "comment_num": 0, "share_num": 0, "browse_num": 0, "create_time": int(time.time() * 1000), "updated_time": int(time.time() * 1000), "pic_id": [], "desc": desc
+            condition = {
+                "uid": uid, "user_id": user_id, "cover_url": cover_url, "content": content, "title": title, "state": 0, "type": "tw", "is_recommend": False, "like_num": 0, 
+                "comment_num": 0, "share_num": 0, "browse_num": 0, "create_time": int(time.time() * 1000), "updated_time": int(time.time() * 1000), "pic_id": [], "desc": desc
             }
             manage.client["works"].insert(condition)
             # 统计
@@ -533,8 +537,10 @@ def post_create_article_works(domain=constant.DOMAIN):
                 if doc["n"] == 0:
                     return response(msg="Update failed.", code=1, status=400)
             else:
-                condition = {"user_id": user_id, "date": today_stamp, "works_num": 1, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
-                             "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)}
+                condition = {
+                    "user_id": user_id, "date": today_stamp, "works_num": 1, "sale_num": 0, "browse_num": 0, "amount": float(0), "like_num": 0, "goods_num": 0, "register_num": 0,
+                    "comment_num": 0, "share_num": 0, "create_time": int(time.time() * 1000), "update_time": int(time.time() * 1000)
+                }
                 manage.client["user_statistical"].insert(condition)
             return response(data=uid)
         else:
